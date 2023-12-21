@@ -1,0 +1,2375 @@
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;Joc de lumini Brad de Craciun cu 20 de LED-uri
+                      00002 ;2023, MPopa
+                      00003 ;
+                      00004 ;placa de dezvolatre folosita: PicKit1
+                      00005 ;proiect realizat in MPLAB V8.92
+                      00006 ;
+                      00007 ;internal OSC = 4MHz --> o instructiune este executata la Fosc/4 = 1MHz
+                      00008 ;timpul de executie este t=1/1000000=1us (o micro secunda)
+                      00009 ;pentru un delay de 100us:
+                      00010 ;delay = C (o constanta) * 1us
+                      00011 ;pentru PWM in asm, urmeaza exemplele din linkul acesta:
+                      00012 ;https://www.circuitbread.com/tutorials/pwm-led-dimming-part-7-microcontroller-basics-pic10f200
+                      00013 ;https://www.circuitbread.com/tutorials/musical-microcontroller-part-8-microcontroller-basics-pic10f200
+                      00014 ;
+                      00015 ;pentru creeat delay SW, foloseste aceasta aplicatie:
+                      00016 ;https://www.golovchenko.org/home/delay_loops
+                      00017 ;
+                      00018 ;
+                      00019 ;
+                      00020 ;===== Program turture:
+                      00021 ;===== incepe cu PWM up led_01
+                      00022 ;===== urmeaza blocuri de 3 led-uri
+                      00023 ;===== apoi PWM down led_12
+                      00024 ;===== pauza 500ms
+                      00025 ;===== PWM up si down pe led_12
+                      00026 ;===== pauza 500ms
+                      00027 ;
+                      00028 ;
+                      00029 ;
+                      00030 ;
+                      00031 ;
+                      00032 ;
+                      00033 ;
+                      00034 ;
+                      00035 ;
+                      00036 ;
+                      00037 
+                      00038         list      p=12F675      ; list directive to define processor
+                      00039         #include <p12f675.inc>  ; processor specific variable definitions
+                      00001         LIST
+                      00002 
+                      00003 ;==========================================================================
+                      00004 ;  MPASM PIC12F675 processor include
+                      00005 ; 
+                      00006 ;  (c) Copyright 1999-2013 Microchip Technology, All rights reserved
+                      00007 ;==========================================================================
+                      00008 
+                      00366         LIST
+                      00040 
+2007   3FC4           00041         __CONFIG  _CP_OFF & _WDT_OFF & _BODEN_ON & _PWRTE_ON & _INTRC_OSC_NOCLKOUT & _MCLRE_OFF & _CPD_O
+                            FF
+                      00042   
+                      00043 ;       errorlevel -302         ;desable warning regarding to bank bits memory
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00044 
+                      00045 ;===variabile folosite in bucla PWM si in buclele pentru Delay:
+                      00046          cblock 0x20    
+  00000020            00047         c1
+  00000021            00048         c2
+  00000022            00049         d1
+  00000023            00050         d2
+  00000024            00051         d3
+  00000025            00052         aa
+  00000026            00053         i       
+  00000027            00054         limit
+  00000028            00055         j
+  00000029            00056         dir
+                      00057          endc
+                      00058 
+                      00059 #define var1    20h
+                      00060 
+                      00061 ;*************************** DEFINE STATEMENTS ********************************
+                      00062 
+                      00063 ; define input/output designation for LEDs (what TRISIO will equal)
+                      00064 #define TRIS_D01_D02    B'00111100'     ; TRISIO setting for D01 and D02
+                      00065 #define TRIS_D03_D04    B'00111001'     ; TRISIO setting for D03 and D04
+                      00066 #define TRIS_D05_D06    B'00101011'     ; TRISIO setting for D05 and D06
+                      00067 #define TRIS_D07_D08    B'00001111'     ; TRISIO setting for D07 and D08
+                      00068 #define TRIS_D09_D10    B'00111010'     ; TRISIO setting for D09 and D10
+                      00069 #define TRIS_D11_D12    B'00101110'     ; TRISIO setting for D11 and D12
+                      00070 #define TRIS_D13_D14    B'00101101'     ; TRISIO setting for D13 and D14
+                      00071 #define TRIS_D15_D16    B'00011101'     ; TRISIO setting for D15 and D16
+                      00072 #define TRIS_D17_D18    B'00011110'     ; TRISIO setting for D17 and D18
+                      00073 #define TRIS_D19_D20    B'00011011'     ; TRISIO setting for D19 and D20
+                      00074 #define TRIS_ALL_OUTPUT B'00111111' ; TRISIO settings for all outputs
+                      00075 
+                      00076 ; define LED state (what GPIO will equal)
+                      00077 #define D01_ON  B'00000001'             ; D01 LED
+                      00078 #define D02_ON  B'00000010'             ; D02 LED
+                      00079 #define D03_ON  B'00000010'             ; D03 LED
+                      00080 #define D04_ON  B'00000100'             ; D04 LED
+                      00081 #define D05_ON  B'00000100'             ; D05 LED
+                      00082 #define D06_ON  B'00010000'             ; D06 LED
+                      00083 #define D07_ON  B'00010000'             ; D07 LED
+                      00084 #define D08_ON  B'00100000'             ; D08 LED
+                      00085 #define D09_ON  B'00000001'             ; D09 LED
+                      00086 #define D10_ON  B'00000100'             ; D10 LED
+                      00087 #define D11_ON  B'00000001'             ; D11 LED
+                      00088 #define D12_ON  B'00010000'             ; D12 LED
+                      00089 #define D13_ON  B'00000010'             ; D13 LED
+                      00090 #define D14_ON  B'00010000'             ; D14 LED
+                      00091 #define D15_ON  B'00000010'             ; D15 LED
+                      00092 #define D16_ON  B'00100000'             ; D16 LED
+                      00093 #define D17_ON  B'00000001'             ; D17 LED
+                      00094 #define D18_ON  B'00100000'             ; D18 LED
+                      00095 #define D19_ON  B'00000100'             ; D19 LED
+                      00096 #define D20_ON  B'00100000'             ; D20 LED
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00097 #define LED_OFF B'00000000'             ; LED Off
+                      00098 
+                      00099 
+                      00100 ;****************************** Start of Program ******************************
+                      00101         org     0x000           ; processor reset vector
+0000   2???           00102         goto Initialize
+                      00103 ;******************************************************************************
+                      00104 
+                      00105 ;       Initialize Special Function Registers     
+                      00106 ;******************************************************************************
+                      00107 
+                      00108 
+                      00109 ;       org 0x0002a0            ; Start of Programm Memory Vector
+0001                  00110 Initialize
+                      00111 ;       Set oscilator:
+0001   1683           00112         bsf             STATUS,RP0              ; Bank 1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0002   0090           00113         movwf   OSCCAL                  ; update register with factory cal
+0003   1683           00114         bsf     STATUS,RP0              ; Bank 1 
+                      00115 
+                      00116 ;       Initializare port GPIO:
+0004   1283           00117         bcf STATUS, RP0                 ; Bank 0
+0005   0185           00118         clrf GPIO                               ; Init GPIO
+0006   3007           00119         movlw 07H                               ; Set GP<2:0> to
+0007   0099           00120         movwf CMCON                             ; digital IO
+0008   1683           00121         bsf STATUS, RP0                 ; Bank 1
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0009   019F           00122         clrf ANSEL                              ; Digital I/O
+                      00123 
+000A   303F           00124         movlw   B'00111111'             ; Set all I/O pins as inputs
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+000B   0085           00125         movwf   TRISIO                  ; SET TRISIO register
+                      00126 
+                      00127 ;       Initializare variabile:
+000C   01A7           00128         clrf limit                              ; Clear the PWM limit
+000D   01A9           00129         clrf dir                                ; Clear the direction
+                      00130 
+                      00131 ;       Setare pentru intrerupere:
+                      00132 ;******************************************************************************
+000E   1683           00133         bsf STATUS, RP0                 ; Bank 1
+                      00134 ;       movlw   B'00001000'             ; Set interrupt on change at pin GP3
+000F   3000           00135         movlw   B'00000000'             ; Clear interupt on change at pin GP3 
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0010   0096           00136         movwf   IOC                             ; Set IOC register
+                      00137 
+                      00138 
+                      00139 ;       movlw   B'10001000'             ; Set interrupts at GPIO port change
+0011   3000           00140         movlw   B'00000000'             ; Clear interrupts 
+0012   008B           00141         movwf   INTCON                  ; Set INCON register
+                      00142 
+                      00143 ;******************************************************************************
+                      00144 ;******************************** Start Program *******************************
+                      00145 ;******************************************************************************
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00146 
+                      00147 ;==========Incercare de randomizare
+                      00148 ;Random startup:
+                      00149 ;       call 3ffh
+                      00150                 
+                      00151 ;       subwf var1,F            ;randomizare start-up
+                      00152 ;       swapf var1,F
+                      00153 ;       comf var1,F
+                      00154 ;       addwf var1,W
+                      00155 ;       rrf var1,F
+                      00156 ;       rrf var1,F
+                      00157 ;       addwf var1,F
+                      00158 ;       movlw 11111b
+                      00159 ;       andwf var1,F
+                      00160 ;       goto pauza
+                      00161 
+                      00162 ;=====Bucla pentru pauza randomizare
+                      00163 ;pauza           
+                      00164 ;       bsf STATUS,DC
+                      00165 ;       btfsc STATUS,DC
+                      00166 ;       goto $-1
+                      00167 
+                      00168 ;       decfsz var1
+                      00169 ;       goto pauza
+                      00170                 
+                      00171 ;       goto bucla
+                      00172 ;==========Incercare de randomizare
+                      00173 
+0013                  00174 bucla
+                      00175 
+0013   3001           00176     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0014   00A9           00177     MOVWF dir                   ;set PWM up or down
+0015   2???           00178         call LOOP_PWM_led_01    ;bucla PWM
+0016   2???           00179         call Delay_500ms
+                      00180 
+0017   2???           00181         call Bucla_random
+                      00182 
+0018   3001           00183     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0019   00A9           00184     MOVWF dir                   ;set PWM up or down
+001A   2???           00185         call LOOP_PWM_led_02    ;bucla PWM
+001B   2???           00186         call Delay_500ms
+                      00187 
+001C   2???           00188         call Bucla_random
+                      00189 
+001D   3001           00190     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+001E   00A9           00191     MOVWF dir                   ;set PWM up or down
+001F   2???           00192         call LOOP_PWM_led_08    ;bucla PWM
+0020   2???           00193         call Delay_500ms
+                      00194 
+0021   2???           00195         call Bucla_random
+                      00196 
+0022   3001           00197     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0023   00A9           00198     MOVWF dir                   ;set PWM up or down
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0024   2???           00199         call LOOP_PWM_led_04    ;bucla PWM
+0025   2???           00200         call Delay_500ms
+                      00201 
+0026   2???           00202         call Bucla_random
+                      00203 
+0027   3001           00204     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0028   00A9           00205     MOVWF dir                   ;set PWM up or down
+0029   2???           00206         call LOOP_PWM_led_10    ;bucla PWM
+002A   2???           00207         call Delay_500ms
+                      00208 
+002B   2???           00209         call Bucla_random
+                      00210 
+002C   3001           00211     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+002D   00A9           00212     MOVWF dir                   ;set PWM up or down
+002E   2???           00213         call LOOP_PWM_led_06    ;bucla PWM
+002F   2???           00214         call Delay_500ms
+                      00215 
+0030   2???           00216         call Bucla_random
+                      00217 
+0031   3001           00218     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0032   00A9           00219     MOVWF dir                   ;set PWM up or down
+0033   2???           00220         call LOOP_PWM_led_12    ;bucla PWM
+0034   2???           00221         call Delay_500ms
+                      00222 
+0035   2???           00223         call Bucla_random
+                      00224 
+0036   3001           00225     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0037   00A9           00226     MOVWF dir                   ;set PWM up or down
+0038   2???           00227         call LOOP_PWM_led_05    ;bucla PWM
+0039   2???           00228         call Delay_500ms
+                      00229 
+003A   2???           00230         call Bucla_random
+                      00231 
+003B   3001           00232     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+003C   00A9           00233     MOVWF dir                   ;set PWM up or down
+003D   2???           00234         call LOOP_PWM_led_11    ;bucla PWM
+003E   2???           00235         call Delay_500ms
+                      00236 
+003F   2???           00237         call Bucla_random
+                      00238 
+0040   3001           00239     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0041   00A9           00240     MOVWF dir                   ;set PWM up or down
+0042   2???           00241         call LOOP_PWM_led_03    ;bucla PWM
+0043   2???           00242         call Delay_500ms
+                      00243 
+0044   2???           00244         call Bucla_random
+                      00245 
+0045   3001           00246     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0046   00A9           00247     MOVWF dir                   ;set PWM up or down
+0047   2???           00248         call LOOP_PWM_led_09    ;bucla PWM
+0048   2???           00249         call Delay_500ms
+                      00250 
+0049   2???           00251         call Bucla_random
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00252 
+004A   3001           00253     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+004B   00A9           00254     MOVWF dir                   ;set PWM up or down
+004C   2???           00255         call LOOP_PWM_led_07    ;bucla PWM
+004D   2???           00256         call Delay_500ms
+                      00257 
+004E   2???           00258         call Bucla_random
+                      00259 
+004F   3001           00260     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0050   00A9           00261     MOVWF dir                   ;set PWM up or down
+0051   2???           00262         call LOOP_PWM_led_19    ;bucla PWM
+0052   2???           00263         call Delay_500ms
+                      00264 
+0053   2???           00265         call Bucla_random
+                      00266 
+0054   3001           00267     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0055   00A9           00268     MOVWF dir                   ;set PWM up or down
+0056   2???           00269         call LOOP_PWM_led_18    ;bucla PWM
+0057   2???           00270         call Delay_500ms
+                      00271 
+0058   2???           00272         call Bucla_random
+                      00273 
+0059   3001           00274     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+005A   00A9           00275     MOVWF dir                   ;set PWM up or down
+005B   2???           00276         call LOOP_PWM_led_13    ;bucla PWM
+005C   2???           00277         call Delay_500ms
+                      00278 
+005D   2???           00279         call Bucla_random
+                      00280 
+005E   3001           00281     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+005F   00A9           00282     MOVWF dir                   ;set PWM up or down
+0060   2???           00283         call LOOP_PWM_led_15    ;bucla PWM
+0061   2???           00284         call Delay_500ms
+                      00285 
+0062   2???           00286         call Bucla_random
+                      00287 
+0063   3001           00288     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0064   00A9           00289     MOVWF dir                   ;set PWM up or down
+0065   2???           00290         call LOOP_PWM_led_14    ;bucla PWM
+0066   2???           00291         call Delay_500ms
+                      00292 
+0067   2???           00293         call Bucla_random
+                      00294 
+0068   3001           00295     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0069   00A9           00296     MOVWF dir                   ;set PWM up or down
+006A   2???           00297         call LOOP_PWM_led_16    ;bucla PWM
+006B   2???           00298         call Delay_500ms
+                      00299 
+006C   2???           00300         call Bucla_random
+                      00301 
+006D   3001           00302     MOVLW 0x1                           ;1 = PWM 0 -> max; 0 = PWM max -> 0
+006E   00A9           00303     MOVWF dir                   ;set PWM up or down
+006F   2???           00304         call LOOP_PWM_led_17    ;bucla PWM
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0070   2???           00305         call Delay_500ms
+                      00306 
+0071   2???           00307         call Bucla_random
+                      00308 
+0072   3001           00309         MOVLW 0x1                       ;1 = PWM 0 -> max; 0 = PWM max -> 0
+0073   00A9           00310         MOVWF dir               ;set PWM up or down
+0074   2???           00311         call LOOP_PWM_led_20    ;bucla PWM
+0075   2???           00312         call Delay_500ms
+                      00313 
+0076   2???           00314         call Bucla_random
+                      00315 
+0077   2???           00316         goto bucla
+                      00317 
+0078                  00318 Bucla_random
+0078   2???           00319         call Led_01
+0079   2???           00320         call Delay_100ms
+                      00321 
+007A   2???           00322         call Led_02
+007B   2???           00323         call Delay_100ms
+                      00324 
+007C   2???           00325         call Led_08
+007D   2???           00326         call Delay_100ms
+                      00327 
+007E   2???           00328         call Led_04
+007F   2???           00329         call Delay_100ms
+                      00330 
+0080   2???           00331         call Led_10
+0081   2???           00332         call Delay_100ms
+                      00333 
+0082   2???           00334         call Led_06
+0083   2???           00335         call Delay_100ms
+                      00336 
+0084   2???           00337         call Led_12
+0085   2???           00338         call Delay_100ms
+                      00339 
+0086   2???           00340         call Led_05
+0087   2???           00341         call Delay_100ms
+                      00342 
+0088   2???           00343         call Led_11
+0089   2???           00344         call Delay_100ms
+                      00345 
+008A   2???           00346         call Led_03
+008B   2???           00347         call Delay_100ms
+                      00348 
+008C   2???           00349         call Led_09
+008D   2???           00350         call Delay_100ms
+                      00351 
+008E   2???           00352         call Led_07
+008F   2???           00353         call Delay_100ms        
+                      00354 
+0090   2???           00355         call Led_19
+0091   2???           00356         call Delay_100ms
+                      00357 
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  8
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0092   2???           00358         call Led_18
+0093   2???           00359         call Delay_100ms
+                      00360 
+0094   2???           00361         call Led_13
+0095   2???           00362         call Delay_100ms
+                      00363 
+0096   2???           00364         call Led_15
+0097   2???           00365         call Delay_100ms
+                      00366 
+0098   2???           00367         call Led_14
+0099   2???           00368         call Delay_100ms
+                      00369 
+009A   2???           00370         call Led_16
+009B   2???           00371         call Delay_100ms
+                      00372 
+009C   2???           00373         call Led_17
+009D   2???           00374         call Delay_100ms
+                      00375 
+009E   2???           00376         call Led_20
+009F   2???           00377         call Delay_100ms        
+                      00378 
+                      00379 
+00A0                  00380 Led_off
+00A0   1683           00381         bsf             STATUS, RP0             ; Bank 1
+00A1   303F           00382         movlw   TRIS_ALL_OUTPUT ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00A2   0085           00383         movwf   TRISIO
+00A3   1283           00384         bcf             STATUS, RP0             ; Bank 0
+00A4   3000           00385         movlw   LED_OFF                 ; move predefined value to GPIO
+00A5   0085           00386         movwf   GPIO
+00A6   0008           00387         return
+                      00388 
+00A7                  00389 Led_01
+00A7   1683           00390         bsf             STATUS, RP0             ; Bank 1
+00A8   303C           00391         movlw   TRIS_D01_D02    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00A9   0085           00392         movwf   TRISIO
+00AA   1283           00393         bcf             STATUS, RP0             ; Bank 0
+00AB   3001           00394         movlw   D01_ON                  ; move predefined value to GPIO
+00AC   0085           00395         movwf   GPIO
+00AD   0008           00396         return
+                      00397 
+00AE                  00398 Led_02
+00AE   1683           00399         bsf             STATUS, RP0             ; Bank 1
+00AF   303C           00400         movlw   TRIS_D01_D02    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00B0   0085           00401         movwf   TRISIO
+00B1   1283           00402         bcf             STATUS, RP0             ; Bank 0
+00B2   3002           00403         movlw   D02_ON                  ; move predefined value to GPIO
+00B3   0085           00404         movwf   GPIO
+00B4   0008           00405         return
+                      00406 
+00B5                  00407 Led_03
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE  9
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00B5   1683           00408         bsf             STATUS, RP0             ; Bank 1
+00B6   3039           00409         movlw   TRIS_D03_D04    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00B7   0085           00410         movwf   TRISIO
+00B8   1283           00411         bcf             STATUS, RP0             ; Bank 0
+00B9   3002           00412         movlw   D03_ON                  ; move predefined value to GPIO
+00BA   0085           00413         movwf   GPIO
+00BB   0008           00414         return
+                      00415 
+00BC                  00416 Led_04
+00BC   1683           00417         bsf             STATUS, RP0             ; Bank 1
+00BD   3039           00418         movlw   TRIS_D03_D04    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00BE   0085           00419         movwf   TRISIO
+00BF   1283           00420         bcf             STATUS, RP0             ; Bank 0
+00C0   3004           00421         movlw   D04_ON                  ; move predefined value to GPIO
+00C1   0085           00422         movwf   GPIO
+00C2   0008           00423         return
+                      00424 
+00C3                  00425 Led_05
+00C3   1683           00426         bsf             STATUS, RP0             ; Bank 1
+00C4   302B           00427         movlw   TRIS_D05_D06    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00C5   0085           00428         movwf   TRISIO
+00C6   1283           00429         bcf             STATUS, RP0             ; Bank 0
+00C7   3004           00430         movlw   D05_ON                  ; move predefined value to GPIO
+00C8   0085           00431         movwf   GPIO
+00C9   0008           00432         return
+                      00433 
+00CA                  00434 Led_06
+00CA   1683           00435         bsf             STATUS, RP0             ; Bank 1
+00CB   302B           00436         movlw   TRIS_D05_D06    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00CC   0085           00437         movwf   TRISIO
+00CD   1283           00438         bcf             STATUS, RP0             ; Bank 0
+00CE   3010           00439         movlw   D06_ON                  ; move predefined value to GPIO
+00CF   0085           00440         movwf   GPIO
+00D0   0008           00441         return
+                      00442 
+00D1                  00443 Led_07
+00D1   1683           00444         bsf             STATUS, RP0             ; Bank 1
+00D2   300F           00445         movlw   TRIS_D07_D08    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00D3   0085           00446         movwf   TRISIO
+00D4   1283           00447         bcf             STATUS, RP0             ; Bank 0
+00D5   3010           00448         movlw   D07_ON                  ; move predefined value to GPIO
+00D6   0085           00449         movwf   GPIO
+00D7   0008           00450         return
+                      00451 
+00D8                  00452 Led_08
+00D8   1683           00453         bsf             STATUS, RP0             ; Bank 1
+00D9   300F           00454         movlw   TRIS_D07_D08    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 10
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+00DA   0085           00455         movwf   TRISIO
+00DB   1283           00456         bcf             STATUS, RP0             ; Bank 0
+00DC   3020           00457         movlw   D08_ON                  ; move predefined value to GPIO
+00DD   0085           00458         movwf   GPIO
+00DE   0008           00459         return
+                      00460 
+00DF                  00461 Led_09
+00DF   1683           00462         bsf             STATUS, RP0             ; Bank 1
+00E0   303A           00463         movlw   TRIS_D09_D10    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00E1   0085           00464         movwf   TRISIO
+00E2   1283           00465         bcf             STATUS, RP0             ; Bank 0
+00E3   3001           00466         movlw   D09_ON                  ; move predefined value to GPIO
+00E4   0085           00467         movwf   GPIO
+00E5   0008           00468         return
+                      00469 
+00E6                  00470 Led_10
+00E6   1683           00471         bsf             STATUS, RP0             ; Bank 1
+00E7   303A           00472         movlw   TRIS_D09_D10    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00E8   0085           00473         movwf   TRISIO
+00E9   1283           00474         bcf             STATUS, RP0             ; Bank 0
+00EA   3004           00475         movlw   D10_ON                  ; move predefined value to GPIO
+00EB   0085           00476         movwf   GPIO
+00EC   0008           00477         return
+                      00478 
+00ED                  00479 Led_11
+00ED   1683           00480         bsf             STATUS, RP0             ; Bank 1
+00EE   302E           00481         movlw   TRIS_D11_D12    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00EF   0085           00482         movwf   TRISIO
+00F0   1283           00483         bcf             STATUS, RP0             ; Bank 0
+00F1   3001           00484         movlw   D11_ON                  ; move predefined value to GPIO
+00F2   0085           00485         movwf   GPIO
+00F3   0008           00486         return
+                      00487 
+00F4                  00488 Led_12
+00F4   1683           00489         bsf             STATUS, RP0             ; Bank 1
+00F5   302E           00490         movlw   TRIS_D11_D12    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00F6   0085           00491         movwf   TRISIO
+00F7   1283           00492         bcf             STATUS, RP0             ; Bank 0
+00F8   3010           00493         movlw   D12_ON                  ; move predefined value to GPIO
+00F9   0085           00494         movwf   GPIO
+00FA   0008           00495         return
+                      00496 
+00FB                  00497 Led_13
+00FB   1683           00498         bsf             STATUS, RP0             ; Bank 1
+00FC   302D           00499         movlw   TRIS_D13_D14    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+00FD   0085           00500         movwf   TRISIO
+00FE   1283           00501         bcf             STATUS, RP0             ; Bank 0
+00FF   3002           00502         movlw   D13_ON                  ; move predefined value to GPIO
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0100   0085           00503         movwf   GPIO
+0101   0008           00504         return
+                      00505 
+0102                  00506 Led_14
+0102   1683           00507         bsf             STATUS, RP0             ; Bank 1
+0103   302D           00508         movlw   TRIS_D13_D14    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0104   0085           00509         movwf   TRISIO
+0105   1283           00510         bcf             STATUS, RP0             ; Bank 0
+0106   3010           00511         movlw   D14_ON                  ; move predefined value to GPIO
+0107   0085           00512         movwf   GPIO
+0108   0008           00513         return
+                      00514 
+0109                  00515 Led_15
+0109   1683           00516         bsf             STATUS, RP0             ; Bank 1
+010A   301D           00517         movlw   TRIS_D15_D16    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+010B   0085           00518         movwf   TRISIO
+010C   1283           00519         bcf             STATUS, RP0             ; Bank 0
+010D   3002           00520         movlw   D15_ON                  ; move predefined value to GPIO
+010E   0085           00521         movwf   GPIO
+010F   0008           00522         return
+                      00523 
+0110                  00524 Led_16
+0110   1683           00525         bsf             STATUS, RP0             ; Bank 1
+0111   301D           00526         movlw   TRIS_D15_D16    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0112   0085           00527         movwf   TRISIO
+0113   1283           00528         bcf             STATUS, RP0             ; Bank 0
+0114   3020           00529         movlw   D16_ON                  ; move predefined value to GPIO
+0115   0085           00530         movwf   GPIO
+0116   0008           00531         return
+                      00532 
+0117                  00533 Led_17
+0117   1683           00534         bsf             STATUS, RP0             ; Bank 1
+0118   301E           00535         movlw   TRIS_D17_D18    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0119   0085           00536         movwf   TRISIO
+011A   1283           00537         bcf             STATUS, RP0             ; Bank 0
+011B   3001           00538         movlw   D17_ON                  ; move predefined value to GPIO
+011C   0085           00539         movwf   GPIO
+011D   0008           00540         return
+                      00541 
+011E                  00542 Led_18
+011E   1683           00543         bsf             STATUS, RP0             ; Bank 1
+011F   301E           00544         movlw   TRIS_D17_D18    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0120   0085           00545         movwf   TRISIO
+0121   1283           00546         bcf             STATUS, RP0             ; Bank 0
+0122   3020           00547         movlw   D18_ON                  ; move predefined value to GPIO
+0123   0085           00548         movwf   GPIO
+0124   0008           00549         return
+                      00550 
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0125                  00551 Led_19
+0125   1683           00552         bsf             STATUS, RP0             ; Bank 1
+0126   301B           00553         movlw   TRIS_D19_D20    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+0127   0085           00554         movwf   TRISIO
+0128   1283           00555         bcf             STATUS, RP0             ; Bank 0
+0129   3004           00556         movlw   D19_ON                  ; move predefined value to GPIO
+012A   0085           00557         movwf   GPIO
+012B   0008           00558         return
+                      00559 
+012C                  00560 Led_20
+012C   1683           00561         bsf             STATUS, RP0             ; Bank 1
+012D   301B           00562         movlw   TRIS_D19_D20    ; move predefined value to TRISIO
+Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
+012E   0085           00563         movwf   TRISIO
+012F   1283           00564         bcf             STATUS, RP0             ; Bank 0
+0130   3020           00565         movlw   D20_ON                  ; move predefined value to GPIO
+0131   0085           00566         movwf   GPIO
+0132   0008           00567         return
+                      00568 
+                      00569 
+                      00570 
+                      00571 
+                      00572 ;==========Bucla PWM up si down!!!
+                      00573 ;==========Bucla PWM Led 01 - primul led
+                      00574 
+0133                  00575 LOOP_PWM_led_01
+                      00576 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00577 ;    MOVWF dir                  ;set PWM up or down             
+0133   2???           00578         call Led_01                             ;led ON
+0134   30FF           00579     MOVLW 0xFF                          ;Set the initial value of i
+0135   00A6           00580     MOVWF i                             ;as 0xFF
+                      00581 ;    BSF GPIO, GP1              ;Set GP1 pin
+0136                  00582 INT_LOOP_led_01                         ;Beginning of the internal PWM loop
+0136   0827           00583     MOVF limit, W               ;Copy the PWM limit value of the W register
+0137   0226           00584     SUBWF i, W                          ;Subtract the W from i
+0138   1D03           00585     BTFSS STATUS, Z             ;If the result is not 0
+0139   2???           00586     GOTO $ + 2                          ;then go to the line 22
+                      00587 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+013A   2???           00588         call Led_off                    ;led OFF
+013B   2???           00589     CALL DELAY_led_01           ;and call the DELAY subroutine
+013C   0BA6           00590     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+013D   2???           00591     GOTO INT_LOOP_led_01    ;If not, return to the internal PWM loop start
+013E   1C29           00592     BTFSS dir, 0                     
+013F   2???           00593     GOTO DEC_BRIGHTNESS_led_01
+0140   0BA7           00594     DECFSZ limit, F                  
+0141   2???           00595     GOTO LOOP_PWM_led_01                 
+0142   2???           00596     GOTO TOGGLE_DIR_led_01       
+0143                  00597 DEC_BRIGHTNESS_led_01            
+0143   0AA7           00598     INCF limit, F                    
+0144   30FF           00599     MOVLW 0xFF                   
+0145   0227           00600     SUBWF limit, W                   
+0146   1D03           00601     BTFSS STATUS, Z      
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0147   2???           00602     GOTO LOOP_PWM_led_01                 
+0148                  00603 TOGGLE_DIR_led_01                
+0148   1C29           00604     BTFSS dir, 0                     
+0149   2???           00605     GOTO SET_DIR_led_01                      
+014A   1029           00606     BCF dir, 0                               
+                      00607 ;    GOTO LOOP_PWM_led_01                
+014B   0008           00608         return
+014C                  00609 SET_DIR_led_01                           
+014C   1429           00610     BSF dir, 0                               
+                      00611 ;    GOTO LOOP_PWM_led_01   
+014D   0008           00612         return 
+                      00613 
+014E                  00614 DELAY_led_01                            ;Start DELAY subroutine here
+014E   3005           00615     MOVLW 5;10                          ;Load initial value for the delay    
+014F   00A8           00616     MOVWF j                             ;Copy the value to j
+0150                  00617 DELAY_LOOP_led_01               ;Start delay loop
+0150   0BA8           00618     decfsz j, f                         ;Decrement j and check if it is not zero
+0151   2???           00619     goto DELAY_LOOP_led_01  ;If not, then go to the DELAY_LOOP label
+                      00620 ;    RETLW 0                            ;Else return from the subroutine
+0152   0008           00621         return
+                      00622 
+                      00623 ;==========Bucla PWM Led 02 - al doilea led
+                      00624 
+0153                  00625 LOOP_PWM_led_02
+                      00626 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00627 ;    MOVWF dir                  ;set PWM up or down             
+0153   2???           00628         call Led_02                             ;led ON
+0154   30FF           00629     MOVLW 0xFF                          ;Set the initial value of i
+0155   00A6           00630     MOVWF i                             ;as 0xFF
+                      00631 ;    BSF GPIO, GP1              ;Set GP1 pin
+0156                  00632 INT_LOOP_led_02                         ;Beginning of the internal PWM loop
+0156   0827           00633     MOVF limit, W               ;Copy the PWM limit value of the W register
+0157   0226           00634     SUBWF i, W                          ;Subtract the W from i
+0158   1D03           00635     BTFSS STATUS, Z             ;If the result is not 0
+0159   2???           00636     GOTO $ + 2                          ;then go to the line 22
+                      00637 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+015A   2???           00638         call Led_off                    ;led OFF
+015B   2???           00639     CALL DELAY_led_02           ;and call the DELAY subroutine
+015C   0BA6           00640     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+015D   2???           00641     GOTO INT_LOOP_led_02    ;If not, return to the internal PWM loop start
+015E   1C29           00642     BTFSS dir, 0                     
+015F   2???           00643     GOTO DEC_BRIGHTNESS_led_02
+0160   0BA7           00644     DECFSZ limit, F                  
+0161   2???           00645     GOTO LOOP_PWM_led_02                 
+0162   2???           00646     GOTO TOGGLE_DIR_led_02       
+0163                  00647 DEC_BRIGHTNESS_led_02    
+0163   0AA7           00648     INCF limit, F                    
+0164   30FF           00649     MOVLW 0xFF                   
+0165   0227           00650     SUBWF limit, W                   
+0166   1D03           00651     BTFSS STATUS, Z      
+0167   2???           00652     GOTO LOOP_PWM_led_02                 
+0168                  00653 TOGGLE_DIR_led_02                
+0168   1C29           00654     BTFSS dir, 0                     
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 14
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0169   2???           00655     GOTO SET_DIR_led_02                      
+016A   1029           00656     BCF dir, 0                               
+                      00657 ;    GOTO LOOP_PWM_led_02                
+016B   0008           00658         return
+016C                  00659 SET_DIR_led_02                           
+016C   1429           00660     BSF dir, 0                               
+                      00661 ;    GOTO LOOP_PWM_led_02   
+016D   0008           00662         return 
+                      00663 
+016E                  00664 DELAY_led_02                            ;Start DELAY subroutine here
+016E   3005           00665     MOVLW 5;10                          ;Load initial value for the delay    
+016F   00A8           00666     MOVWF j                             ;Copy the value to j
+0170                  00667 DELAY_LOOP_led_02               ;Start delay loop
+0170   0BA8           00668     decfsz j, f                         ;Decrement j and check if it is not zero
+0171   2???           00669     goto DELAY_LOOP_led_02  ;If not, then go to the DELAY_LOOP label
+                      00670 ;    RETLW 0                            ;Else return from the subroutine
+0172   0008           00671         return
+                      00672 
+                      00673 ;==========Bucla PWM Led 03 - al treilea led
+                      00674 
+0173                  00675 LOOP_PWM_led_03
+                      00676 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00677 ;    MOVWF dir                  ;set PWM up or down             
+0173   2???           00678         call Led_03                             ;led ON
+0174   30FF           00679     MOVLW 0xFF                          ;Set the initial value of i
+0175   00A6           00680     MOVWF i                             ;as 0xFF
+                      00681 ;    BSF GPIO, GP1              ;Set GP1 pin
+0176                  00682 INT_LOOP_led_03                         ;Beginning of the internal PWM loop
+0176   0827           00683     MOVF limit, W               ;Copy the PWM limit value of the W register
+0177   0226           00684     SUBWF i, W                          ;Subtract the W from i
+0178   1D03           00685     BTFSS STATUS, Z             ;If the result is not 0
+0179   2???           00686     GOTO $ + 2                          ;then go to the line 22
+                      00687 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+017A   2???           00688         call Led_off                    ;led OFF
+017B   2???           00689     CALL DELAY_led_03           ;and call the DELAY subroutine
+017C   0BA6           00690     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+017D   2???           00691     GOTO INT_LOOP_led_03    ;If not, return to the internal PWM loop start
+017E   1C29           00692     BTFSS dir, 0                     
+017F   2???           00693     GOTO DEC_BRIGHTNESS_led_03
+0180   0BA7           00694     DECFSZ limit, F                  
+0181   2???           00695     GOTO LOOP_PWM_led_03                 
+0182   2???           00696     GOTO TOGGLE_DIR_led_03       
+0183                  00697 DEC_BRIGHTNESS_led_03            
+0183   0AA7           00698     INCF limit, F                    
+0184   30FF           00699     MOVLW 0xFF                   
+0185   0227           00700     SUBWF limit, W                   
+0186   1D03           00701     BTFSS STATUS, Z      
+0187   2???           00702     GOTO LOOP_PWM_led_03                 
+0188                  00703 TOGGLE_DIR_led_03                
+0188   1C29           00704     BTFSS dir, 0                     
+0189   2???           00705     GOTO SET_DIR_led_03                      
+018A   1029           00706     BCF dir, 0                               
+                      00707 ;    GOTO LOOP_PWM_led_03                
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 15
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+018B   0008           00708         return
+018C                  00709 SET_DIR_led_03                           
+018C   1429           00710     BSF dir, 0                               
+                      00711 ;    GOTO LOOP_PWM_led_03   
+018D   0008           00712         return 
+                      00713 
+018E                  00714 DELAY_led_03                            ;Start DELAY subroutine here
+018E   3005           00715     MOVLW 5;10                          ;Load initial value for the delay    
+018F   00A8           00716     MOVWF j                             ;Copy the value to j
+0190                  00717 DELAY_LOOP_led_03               ;Start delay loop
+0190   0BA8           00718     decfsz j, f                         ;Decrement j and check if it is not zero
+0191   2???           00719     goto DELAY_LOOP_led_03  ;If not, then go to the DELAY_LOOP label
+                      00720 ;    RETLW 0                            ;Else return from the subroutine
+0192   0008           00721         return
+                      00722 
+                      00723 ;==========Bucla PWM Led 04 - al patrulea led
+                      00724 
+0193                  00725 LOOP_PWM_led_04
+                      00726 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00727 ;    MOVWF dir                  ;set PWM up or down             
+0193   2???           00728         call Led_04                             ;led ON
+0194   30FF           00729     MOVLW 0xFF                          ;Set the initial value of i
+0195   00A6           00730     MOVWF i                             ;as 0xFF
+                      00731 ;    BSF GPIO, GP1              ;Set GP1 pin
+0196                  00732 INT_LOOP_led_04                         ;Beginning of the internal PWM loop
+0196   0827           00733     MOVF limit, W               ;Copy the PWM limit value of the W register
+0197   0226           00734     SUBWF i, W                          ;Subtract the W from i
+0198   1D03           00735     BTFSS STATUS, Z             ;If the result is not 0
+0199   2???           00736     GOTO $ + 2                          ;then go to the line 22
+                      00737 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+019A   2???           00738         call Led_off                    ;led OFF
+019B   2???           00739     CALL DELAY_led_04           ;and call the DELAY subroutine
+019C   0BA6           00740     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+019D   2???           00741     GOTO INT_LOOP_led_04    ;If not, return to the internal PWM loop start
+019E   1C29           00742     BTFSS dir, 0                     
+019F   2???           00743     GOTO DEC_BRIGHTNESS_led_04
+01A0   0BA7           00744     DECFSZ limit, F                  
+01A1   2???           00745     GOTO LOOP_PWM_led_04                 
+01A2   2???           00746     GOTO TOGGLE_DIR_led_04       
+01A3                  00747 DEC_BRIGHTNESS_led_04            
+01A3   0AA7           00748     INCF limit, F                    
+01A4   30FF           00749     MOVLW 0xFF                   
+01A5   0227           00750     SUBWF limit, W                   
+01A6   1D03           00751     BTFSS STATUS, Z      
+01A7   2???           00752     GOTO LOOP_PWM_led_04                 
+01A8                  00753 TOGGLE_DIR_led_04                
+01A8   1C29           00754     BTFSS dir, 0                     
+01A9   2???           00755     GOTO SET_DIR_led_04                      
+01AA   1029           00756     BCF dir, 0                               
+                      00757 ;    GOTO LOOP_PWM_led_04                
+01AB   0008           00758         return
+01AC                  00759 SET_DIR_led_04                           
+01AC   1429           00760     BSF dir, 0                               
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 16
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00761 ;    GOTO LOOP_PWM_led_04   
+01AD   0008           00762         return 
+                      00763 
+01AE                  00764 DELAY_led_04                            ;Start DELAY subroutine here
+01AE   3005           00765     MOVLW 5;10                          ;Load initial value for the delay    
+01AF   00A8           00766     MOVWF j                             ;Copy the value to j
+01B0                  00767 DELAY_LOOP_led_04               ;Start delay loop
+01B0   0BA8           00768     decfsz j, f                         ;Decrement j and check if it is not zero
+01B1   2???           00769     goto DELAY_LOOP_led_04  ;If not, then go to the DELAY_LOOP label
+                      00770 ;    RETLW 0                            ;Else return from the subroutine
+01B2   0008           00771         return
+                      00772 
+                      00773 ;==========Bucla PWM Led 05 - al cincilea led
+                      00774 
+01B3                  00775 LOOP_PWM_led_05
+                      00776 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00777 ;    MOVWF dir                  ;set PWM up or down             
+01B3   2???           00778         call Led_05                             ;led ON
+01B4   30FF           00779     MOVLW 0xFF                          ;Set the initial value of i
+01B5   00A6           00780     MOVWF i                             ;as 0xFF
+                      00781 ;    BSF GPIO, GP1              ;Set GP1 pin
+01B6                  00782 INT_LOOP_led_05                         ;Beginning of the internal PWM loop
+01B6   0827           00783     MOVF limit, W               ;Copy the PWM limit value of the W register
+01B7   0226           00784     SUBWF i, W                          ;Subtract the W from i
+01B8   1D03           00785     BTFSS STATUS, Z             ;If the result is not 0
+01B9   2???           00786     GOTO $ + 2                          ;then go to the line 22
+                      00787 ;    BCF GPIO, GP5              ;else reset the GP1 pin
+01BA   2???           00788         call Led_off                    ;led OFF
+01BB   2???           00789     CALL DELAY_led_05           ;and call the DELAY subroutine
+01BC   0BA6           00790     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+01BD   2???           00791     GOTO INT_LOOP_led_05    ;If not, return to the internal PWM loop start
+01BE   1C29           00792     BTFSS dir, 0                     
+01BF   2???           00793     GOTO DEC_BRIGHTNESS_led_05
+01C0   0BA7           00794     DECFSZ limit, F                  
+01C1   2???           00795     GOTO LOOP_PWM_led_05                 
+01C2   2???           00796     GOTO TOGGLE_DIR_led_05       
+01C3                  00797 DEC_BRIGHTNESS_led_05            
+01C3   0AA7           00798     INCF limit, F                    
+01C4   30FF           00799     MOVLW 0xFF                   
+01C5   0227           00800     SUBWF limit, W                   
+01C6   1D03           00801     BTFSS STATUS, Z      
+01C7   2???           00802     GOTO LOOP_PWM_led_05                 
+01C8                  00803 TOGGLE_DIR_led_05                
+01C8   1C29           00804     BTFSS dir, 0                     
+01C9   2???           00805     GOTO SET_DIR_led_05                      
+01CA   1029           00806     BCF dir, 0                               
+                      00807 ;    GOTO LOOP_PWM_led_05                
+01CB   0008           00808         return
+01CC                  00809 SET_DIR_led_05                           
+01CC   1429           00810     BSF dir, 0                               
+                      00811 ;    GOTO LOOP_PWM_led_05   
+01CD   0008           00812         return 
+                      00813 
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 17
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01CE                  00814 DELAY_led_05                            ;Start DELAY subroutine here
+01CE   3005           00815     MOVLW 5;10                          ;Load initial value for the delay    
+01CF   00A8           00816     MOVWF j                             ;Copy the value to j
+01D0                  00817 DELAY_LOOP_led_05               ;Start delay loop
+01D0   0BA8           00818     decfsz j, f                         ;Decrement j and check if it is not zero
+01D1   2???           00819     goto DELAY_LOOP_led_05  ;If not, then go to the DELAY_LOOP label
+                      00820 ;    RETLW 0                            ;Else return from the subroutine
+01D2   0008           00821         return
+                      00822 
+                      00823 ;==========Bucla PWM Led 06 - al saselea led
+                      00824 
+01D3                  00825 LOOP_PWM_led_06
+                      00826 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00827 ;    MOVWF dir                  ;set PWM up or down             
+01D3   2???           00828         call Led_06                             ;led ON
+01D4   30FF           00829     MOVLW 0xFF                          ;Set the initial value of i
+01D5   00A6           00830     MOVWF i                             ;as 0xFF
+                      00831 ;    BSF GPIO, GP1              ;Set GP1 pin
+01D6                  00832 INT_LOOP_led_06                         ;Beginning of the internal PWM loop
+01D6   0827           00833     MOVF limit, W               ;Copy the PWM limit value of the W register
+01D7   0226           00834     SUBWF i, W                          ;Subtract the W from i
+01D8   1D03           00835     BTFSS STATUS, Z             ;If the result is not 0
+01D9   2???           00836     GOTO $ + 2                          ;then go to the line 22
+                      00837 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+01DA   2???           00838         call Led_off                    ;led OFF
+01DB   2???           00839     CALL DELAY_led_06           ;and call the DELAY subroutine
+01DC   0BA6           00840     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+01DD   2???           00841     GOTO INT_LOOP_led_06    ;If not, return to the internal PWM loop start
+01DE   1C29           00842     BTFSS dir, 0                     
+01DF   2???           00843     GOTO DEC_BRIGHTNESS_led_06
+01E0   0BA7           00844     DECFSZ limit, F                  
+01E1   2???           00845     GOTO LOOP_PWM_led_06                 
+01E2   2???           00846     GOTO TOGGLE_DIR_led_06       
+01E3                  00847 DEC_BRIGHTNESS_led_06            
+01E3   0AA7           00848     INCF limit, F                    
+01E4   30FF           00849     MOVLW 0xFF                   
+01E5   0227           00850     SUBWF limit, W                   
+01E6   1D03           00851     BTFSS STATUS, Z      
+01E7   2???           00852     GOTO LOOP_PWM_led_06                 
+01E8                  00853 TOGGLE_DIR_led_06                
+01E8   1C29           00854     BTFSS dir, 0                     
+01E9   2???           00855     GOTO SET_DIR_led_06                      
+01EA   1029           00856     BCF dir, 0                               
+                      00857 ;    GOTO LOOP_PWM_led_06                
+01EB   0008           00858         return
+01EC                  00859 SET_DIR_led_06                           
+01EC   1429           00860     BSF dir, 0                               
+                      00861 ;    GOTO LOOP_PWM_led_06   
+01ED   0008           00862         return 
+                      00863 
+01EE                  00864 DELAY_led_06                            ;Start DELAY subroutine here
+01EE   3005           00865     MOVLW 5;10                          ;Load initial value for the delay    
+01EF   00A8           00866     MOVWF j                             ;Copy the value to j
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 18
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+01F0                  00867 DELAY_LOOP_led_06               ;Start delay loop
+01F0   0BA8           00868     decfsz j, f                         ;Decrement j and check if it is not zero
+01F1   2???           00869     goto DELAY_LOOP_led_06  ;If not, then go to the DELAY_LOOP label
+                      00870 ;    RETLW 0                            ;Else return from the subroutine
+01F2   0008           00871         return
+                      00872 
+                      00873 ;==========Bucla PWM Led 07 - al saaptelea led
+                      00874 
+01F3                  00875 LOOP_PWM_led_07
+                      00876 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00877 ;    MOVWF dir                  ;set PWM up or down             
+01F3   2???           00878         call Led_07                             ;led ON
+01F4   30FF           00879     MOVLW 0xFF                          ;Set the initial value of i
+01F5   00A6           00880     MOVWF i                             ;as 0xFF
+                      00881 ;    BSF GPIO, GP1              ;Set GP1 pin
+01F6                  00882 INT_LOOP_led_07                         ;Beginning of the internal PWM loop
+01F6   0827           00883     MOVF limit, W               ;Copy the PWM limit value of the W register
+01F7   0226           00884     SUBWF i, W                          ;Subtract the W from i
+01F8   1D03           00885     BTFSS STATUS, Z             ;If the result is not 0
+01F9   2???           00886     GOTO $ + 2                          ;then go to the line 22
+                      00887 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+01FA   2???           00888         call Led_off                    ;led OFF
+01FB   2???           00889     CALL DELAY_led_06           ;and call the DELAY subroutine
+01FC   0BA6           00890     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+01FD   2???           00891     GOTO INT_LOOP_led_07    ;If not, return to the internal PWM loop start
+01FE   1C29           00892     BTFSS dir, 0                     
+01FF   2???           00893     GOTO DEC_BRIGHTNESS_led_07
+0200   0BA7           00894     DECFSZ limit, F                  
+0201   2???           00895     GOTO LOOP_PWM_led_07                 
+0202   2???           00896     GOTO TOGGLE_DIR_led_07       
+0203                  00897 DEC_BRIGHTNESS_led_07            
+0203   0AA7           00898     INCF limit, F                    
+0204   30FF           00899     MOVLW 0xFF                   
+0205   0227           00900     SUBWF limit, W                   
+0206   1D03           00901     BTFSS STATUS, Z      
+0207   2???           00902     GOTO LOOP_PWM_led_07                 
+0208                  00903 TOGGLE_DIR_led_07                
+0208   1C29           00904     BTFSS dir, 0                     
+0209   2???           00905     GOTO SET_DIR_led_07                      
+020A   1029           00906     BCF dir, 0                               
+                      00907 ;    GOTO LOOP_PWM_led_07                
+020B   0008           00908         return
+020C                  00909 SET_DIR_led_07                           
+020C   1429           00910     BSF dir, 0                               
+                      00911 ;    GOTO LOOP_PWM_led_07   
+020D   0008           00912         return 
+                      00913 
+020E                  00914 DELAY_led_07                            ;Start DELAY subroutine here
+020E   3005           00915     MOVLW 5;10                          ;Load initial value for the delay    
+020F   00A8           00916     MOVWF j                             ;Copy the value to j
+0210                  00917 DELAY_LOOP_led_07               ;Start delay loop
+0210   0BA8           00918     decfsz j, f                         ;Decrement j and check if it is not zero
+0211   2???           00919     goto DELAY_LOOP_led_07  ;If not, then go to the DELAY_LOOP label
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 19
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00920 ;    RETLW 0                            ;Else return from the subroutine
+0212   0008           00921         return
+                      00922 
+                      00923 ;==========Bucla PWM Led 08 - al optulea led
+                      00924 
+0213                  00925 LOOP_PWM_led_08
+                      00926 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00927 ;    MOVWF dir                  ;set PWM up or down             
+0213   2???           00928         call Led_08                             ;led ON
+0214   30FF           00929     MOVLW 0xFF                          ;Set the initial value of i
+0215   00A6           00930     MOVWF i                             ;as 0xFF
+                      00931 ;    BSF GPIO, GP1              ;Set GP1 pin
+0216                  00932 INT_LOOP_led_08                         ;Beginning of the internal PWM loop
+0216   0827           00933     MOVF limit, W               ;Copy the PWM limit value of the W register
+0217   0226           00934     SUBWF i, W                          ;Subtract the W from i
+0218   1D03           00935     BTFSS STATUS, Z             ;If the result is not 0
+0219   2???           00936     GOTO $ + 2                          ;then go to the line 22
+                      00937 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+021A   2???           00938         call Led_off                    ;led OFF
+021B   2???           00939     CALL DELAY_led_08           ;and call the DELAY subroutine
+021C   0BA6           00940     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+021D   2???           00941     GOTO INT_LOOP_led_08    ;If not, return to the internal PWM loop start
+021E   1C29           00942     BTFSS dir, 0                     
+021F   2???           00943     GOTO DEC_BRIGHTNESS_led_08
+0220   0BA7           00944     DECFSZ limit, F                  
+0221   2???           00945     GOTO LOOP_PWM_led_08                 
+0222   2???           00946     GOTO TOGGLE_DIR_led_08       
+0223                  00947 DEC_BRIGHTNESS_led_08            
+0223   0AA7           00948     INCF limit, F                    
+0224   30FF           00949     MOVLW 0xFF                   
+0225   0227           00950     SUBWF limit, W                   
+0226   1D03           00951     BTFSS STATUS, Z      
+0227   2???           00952     GOTO LOOP_PWM_led_08                 
+0228                  00953 TOGGLE_DIR_led_08                
+0228   1C29           00954     BTFSS dir, 0                     
+0229   2???           00955     GOTO SET_DIR_led_08                      
+022A   1029           00956     BCF dir, 0                               
+                      00957 ;    GOTO LOOP_PWM_led_08                
+022B   0008           00958         return
+022C                  00959 SET_DIR_led_08                           
+022C   1429           00960     BSF dir, 0                               
+                      00961 ;    GOTO LOOP_PWM_led_08   
+022D   0008           00962         return 
+                      00963 
+022E                  00964 DELAY_led_08                            ;Start DELAY subroutine here
+022E   3005           00965     MOVLW 5;10                          ;Load initial value for the delay    
+022F   00A8           00966     MOVWF j                             ;Copy the value to j
+0230                  00967 DELAY_LOOP_led_08               ;Start delay loop
+0230   0BA8           00968     decfsz j, f                         ;Decrement j and check if it is not zero
+0231   2???           00969     goto DELAY_LOOP_led_08  ;If not, then go to the DELAY_LOOP label
+                      00970 ;    RETLW 0                            ;Else return from the subroutine
+0232   0008           00971         return
+                      00972 
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 20
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00973 
+                      00974 ;==========Bucla PWM Led 09 - al noualea led
+                      00975 
+0233                  00976 LOOP_PWM_led_09
+                      00977 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      00978 ;    MOVWF dir                  ;set PWM up or down             
+0233   2???           00979         call Led_09                             ;led ON
+0234   30FF           00980     MOVLW 0xFF                          ;Set the initial value of i
+0235   00A6           00981     MOVWF i                             ;as 0xFF
+                      00982 ;    BSF GPIO, GP1              ;Set GP1 pin
+0236                  00983 INT_LOOP_led_09                         ;Beginning of the internal PWM loop
+0236   0827           00984     MOVF limit, W               ;Copy the PWM limit value of the W register
+0237   0226           00985     SUBWF i, W                          ;Subtract the W from i
+0238   1D03           00986     BTFSS STATUS, Z             ;If the result is not 0
+0239   2???           00987     GOTO $ + 2                          ;then go to the line 22
+                      00988 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+023A   2???           00989         call Led_off                    ;led OFF
+023B   2???           00990     CALL DELAY_led_09           ;and call the DELAY subroutine
+023C   0BA6           00991     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+023D   2???           00992     GOTO INT_LOOP_led_09    ;If not, return to the internal PWM loop start
+023E   1C29           00993     BTFSS dir, 0                     
+023F   2???           00994     GOTO DEC_BRIGHTNESS_led_09
+0240   0BA7           00995     DECFSZ limit, F                  
+0241   2???           00996     GOTO LOOP_PWM_led_09                 
+0242   2???           00997     GOTO TOGGLE_DIR_led_09       
+0243                  00998 DEC_BRIGHTNESS_led_09            
+0243   0AA7           00999     INCF limit, F                    
+0244   30FF           01000     MOVLW 0xFF                   
+0245   0227           01001     SUBWF limit, W                   
+0246   1D03           01002     BTFSS STATUS, Z      
+0247   2???           01003     GOTO LOOP_PWM_led_09                 
+0248                  01004 TOGGLE_DIR_led_09                
+0248   1C29           01005     BTFSS dir, 0                     
+0249   2???           01006     GOTO SET_DIR_led_09                      
+024A   1029           01007     BCF dir, 0                               
+                      01008 ;    GOTO LOOP_PWM_led_09                
+024B   0008           01009         return
+024C                  01010 SET_DIR_led_09                           
+024C   1429           01011     BSF dir, 0                               
+                      01012 ;    GOTO LOOP_PWM_led_09   
+024D   0008           01013         return 
+                      01014 
+024E                  01015 DELAY_led_09                            ;Start DELAY subroutine here
+024E   3005           01016     MOVLW 5;10                          ;Load initial value for the delay    
+024F   00A8           01017     MOVWF j                             ;Copy the value to j
+0250                  01018 DELAY_LOOP_led_09               ;Start delay loop
+0250   0BA8           01019     decfsz j, f                         ;Decrement j and check if it is not zero
+0251   2???           01020     goto DELAY_LOOP_led_09  ;If not, then go to the DELAY_LOOP label
+                      01021 ;    RETLW 0                            ;Else return from the subroutine
+0252   0008           01022         return
+                      01023 
+                      01024 
+                      01025 ;==========Bucla PWM Led 10 - al zecelea led
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 21
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01026 
+0253                  01027 LOOP_PWM_led_10
+                      01028 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01029 ;    MOVWF dir                  ;set PWM up or down             
+0253   2???           01030         call Led_10                             ;led ON
+0254   30FF           01031     MOVLW 0xFF                          ;Set the initial value of i
+0255   00A6           01032     MOVWF i                             ;as 0xFF
+                      01033 ;    BSF GPIO, GP1              ;Set GP1 pin
+0256                  01034 INT_LOOP_led_10                         ;Beginning of the internal PWM loop
+0256   0827           01035     MOVF limit, W               ;Copy the PWM limit value of the W register
+0257   0226           01036     SUBWF i, W                          ;Subtract the W from i
+0258   1D03           01037     BTFSS STATUS, Z             ;If the result is not 0
+0259   2???           01038     GOTO $ + 2                          ;then go to the line 22
+                      01039 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+025A   2???           01040         call Led_off                    ;led OFF
+025B   2???           01041     CALL DELAY_led_10           ;and call the DELAY subroutine
+025C   0BA6           01042     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+025D   2???           01043     GOTO INT_LOOP_led_10    ;If not, return to the internal PWM loop start
+025E   1C29           01044     BTFSS dir, 0                     
+025F   2???           01045     GOTO DEC_BRIGHTNESS_led_10
+0260   0BA7           01046     DECFSZ limit, F                  
+0261   2???           01047     GOTO LOOP_PWM_led_10                 
+0262   2???           01048     GOTO TOGGLE_DIR_led_10       
+0263                  01049 DEC_BRIGHTNESS_led_10            
+0263   0AA7           01050     INCF limit, F                    
+0264   30FF           01051     MOVLW 0xFF                   
+0265   0227           01052     SUBWF limit, W                   
+0266   1D03           01053     BTFSS STATUS, Z      
+0267   2???           01054     GOTO LOOP_PWM_led_10                 
+0268                  01055 TOGGLE_DIR_led_10                
+0268   1C29           01056     BTFSS dir, 0                     
+0269   2???           01057     GOTO SET_DIR_led_10                      
+026A   1029           01058     BCF dir, 0                               
+                      01059 ;    GOTO LOOP_PWM_led_10                
+026B   0008           01060         return
+026C                  01061 SET_DIR_led_10                           
+026C   1429           01062     BSF dir, 0                               
+                      01063 ;    GOTO LOOP_PWM_led_10   
+026D   0008           01064         return 
+                      01065 
+026E                  01066 DELAY_led_10                            ;Start DELAY subroutine here
+026E   3005           01067     MOVLW 5;10                          ;Load initial value for the delay    
+026F   00A8           01068     MOVWF j                             ;Copy the value to j
+0270                  01069 DELAY_LOOP_led_10               ;Start delay loop
+0270   0BA8           01070     decfsz j, f                         ;Decrement j and check if it is not zero
+0271   2???           01071     goto DELAY_LOOP_led_10  ;If not, then go to the DELAY_LOOP label
+                      01072 ;    RETLW 0                            ;Else return from the subroutine
+0272   0008           01073         return
+                      01074 
+                      01075 ;==========Bucla PWM Led 011 - al unsprezecelea led
+                      01076 
+0273                  01077 LOOP_PWM_led_11
+                      01078 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 22
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      01079 ;    MOVWF dir                  ;set PWM up or down             
+0273   2???           01080         call Led_11                             ;led ON
+0274   30FF           01081     MOVLW 0xFF                          ;Set the initial value of i
+0275   00A6           01082     MOVWF i                             ;as 0xFF
+                      01083 ;    BSF GPIO, GP1              ;Set GP1 pin
+0276                  01084 INT_LOOP_led_11                         ;Beginning of the internal PWM loop
+0276   0827           01085     MOVF limit, W               ;Copy the PWM limit value of the W register
+0277   0226           01086     SUBWF i, W                          ;Subtract the W from i
+0278   1D03           01087     BTFSS STATUS, Z             ;If the result is not 0
+0279   2???           01088     GOTO $ + 2                          ;then go to the line 22
+                      01089 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+027A   2???           01090         call Led_off                    ;led OFF
+027B   2???           01091     CALL DELAY_led_11           ;and call the DELAY subroutine
+027C   0BA6           01092     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+027D   2???           01093     GOTO INT_LOOP_led_11    ;If not, return to the internal PWM loop start
+027E   1C29           01094     BTFSS dir, 0                     
+027F   2???           01095     GOTO DEC_BRIGHTNESS_led_11
+0280   0BA7           01096     DECFSZ limit, F                  
+0281   2???           01097     GOTO LOOP_PWM_led_11                 
+0282   2???           01098     GOTO TOGGLE_DIR_led_11       
+0283                  01099 DEC_BRIGHTNESS_led_11            
+0283   0AA7           01100     INCF limit, F                    
+0284   30FF           01101     MOVLW 0xFF                   
+0285   0227           01102     SUBWF limit, W                   
+0286   1D03           01103     BTFSS STATUS, Z      
+0287   2???           01104     GOTO LOOP_PWM_led_11                 
+0288                  01105 TOGGLE_DIR_led_11                
+0288   1C29           01106     BTFSS dir, 0                     
+0289   2???           01107     GOTO SET_DIR_led_11                      
+028A   1029           01108     BCF dir, 0                               
+                      01109 ;    GOTO LOOP_PWM_led_11                
+028B   0008           01110         return
+028C                  01111 SET_DIR_led_11                           
+028C   1429           01112     BSF dir, 0                               
+                      01113 ;    GOTO LOOP_PWM_led_11   
+028D   0008           01114         return 
+                      01115 
+028E                  01116 DELAY_led_11                            ;Start DELAY subroutine here
+028E   3005           01117     MOVLW 5;10                          ;Load initial value for the delay    
+028F   00A8           01118     MOVWF j                             ;Copy the value to j
+0290                  01119 DELAY_LOOP_led_11               ;Start delay loop
+0290   0BA8           01120     decfsz j, f                         ;Decrement j and check if it is not zero
+0291   2???           01121     goto DELAY_LOOP_led_11  ;If not, then go to the DELAY_LOOP label
+                      01122 ;    RETLW 0                            ;Else return from the subroutine
+0292   0008           01123         return
+                      01124 
+                      01125 ;==========Bucla PWM Led 12 - al doisprezecelea led
+                      01126 
+0293                  01127 LOOP_PWM_led_12
+                      01128 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01129 ;    MOVWF dir                  ;set PWM up or down             
+0293   2???           01130         call Led_12                             ;led ON
+0294   30FF           01131     MOVLW 0xFF                          ;Set the initial value of i
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 23
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0295   00A6           01132     MOVWF i                             ;as 0xFF
+                      01133 ;    BSF GPIO, GP1              ;Set GP1 pin
+0296                  01134 INT_LOOP_led_12                         ;Beginning of the internal PWM loop
+0296   0827           01135     MOVF limit, W               ;Copy the PWM limit value of the W register
+0297   0226           01136     SUBWF i, W                          ;Subtract the W from i
+0298   1D03           01137     BTFSS STATUS, Z             ;If the result is not 0
+0299   2???           01138     GOTO $ + 2                          ;then go to the line 22
+                      01139 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+029A   2???           01140         call Led_off                    ;led OFF
+029B   2???           01141     CALL DELAY_led_12           ;and call the DELAY subroutine
+029C   0BA6           01142     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+029D   2???           01143     GOTO INT_LOOP_led_12    ;If not, return to the internal PWM loop start
+029E   1C29           01144     BTFSS dir, 0                     
+029F   2???           01145     GOTO DEC_BRIGHTNESS_led_12
+02A0   0BA7           01146     DECFSZ limit, F                  
+02A1   2???           01147     GOTO LOOP_PWM_led_12                 
+02A2   2???           01148     GOTO TOGGLE_DIR_led_12       
+02A3                  01149 DEC_BRIGHTNESS_led_12            
+02A3   0AA7           01150     INCF limit, F                    
+02A4   30FF           01151     MOVLW 0xFF                   
+02A5   0227           01152     SUBWF limit, W                   
+02A6   1D03           01153     BTFSS STATUS, Z      
+02A7   2???           01154     GOTO LOOP_PWM_led_12                 
+02A8                  01155 TOGGLE_DIR_led_12                
+02A8   1C29           01156     BTFSS dir, 0                     
+02A9   2???           01157     GOTO SET_DIR_led_12                      
+02AA   1029           01158     BCF dir, 0                               
+                      01159 ;    GOTO LOOP_PWM_led_12                
+02AB   0008           01160         return
+02AC                  01161 SET_DIR_led_12                           
+02AC   1429           01162     BSF dir, 0                               
+                      01163 ;    GOTO LOOP_PWM_led_12   
+02AD   0008           01164         return 
+                      01165 
+02AE                  01166 DELAY_led_12                            ;Start DELAY subroutine here
+02AE   3005           01167     MOVLW 5;10                          ;Load initial value for the delay    
+02AF   00A8           01168     MOVWF j                             ;Copy the value to j
+02B0                  01169 DELAY_LOOP_led_12               ;Start delay loop
+02B0   0BA8           01170     decfsz j, f                         ;Decrement j and check if it is not zero
+02B1   2???           01171     goto DELAY_LOOP_led_12  ;If not, then go to the DELAY_LOOP label
+                      01172 ;    RETLW 0                            ;Else return from the subroutine
+02B2   0008           01173         return
+                      01174 
+                      01175 ;==========Bucla PWM Led 13 - al treisprezecelea led
+                      01176 
+02B3                  01177 LOOP_PWM_led_13
+                      01178 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01179 ;    MOVWF dir                  ;set PWM up or down             
+02B3   2???           01180         call Led_13                             ;led ON
+02B4   30FF           01181     MOVLW 0xFF                          ;Set the initial value of i
+02B5   00A6           01182     MOVWF i                             ;as 0xFF
+                      01183 ;    BSF GPIO, GP1              ;Set GP1 pin
+02B6                  01184 INT_LOOP_led_13                         ;Beginning of the internal PWM loop
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 24
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02B6   0827           01185     MOVF limit, W               ;Copy the PWM limit value of the W register
+02B7   0226           01186     SUBWF i, W                          ;Subtract the W from i
+02B8   1D03           01187     BTFSS STATUS, Z             ;If the result is not 0
+02B9   2???           01188     GOTO $ + 2                          ;then go to the line 22
+                      01189 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+02BA   2???           01190         call Led_off                    ;led OFF
+02BB   2???           01191     CALL DELAY_led_13           ;and call the DELAY subroutine
+02BC   0BA6           01192     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+02BD   2???           01193     GOTO INT_LOOP_led_13    ;If not, return to the internal PWM loop start
+02BE   1C29           01194     BTFSS dir, 0                     
+02BF   2???           01195     GOTO DEC_BRIGHTNESS_led_13
+02C0   0BA7           01196     DECFSZ limit, F                  
+02C1   2???           01197     GOTO LOOP_PWM_led_13                 
+02C2   2???           01198     GOTO TOGGLE_DIR_led_13       
+02C3                  01199 DEC_BRIGHTNESS_led_13            
+02C3   0AA7           01200     INCF limit, F                    
+02C4   30FF           01201     MOVLW 0xFF                   
+02C5   0227           01202     SUBWF limit, W                   
+02C6   1D03           01203     BTFSS STATUS, Z      
+02C7   2???           01204     GOTO LOOP_PWM_led_13                 
+02C8                  01205 TOGGLE_DIR_led_13                
+02C8   1C29           01206     BTFSS dir, 0                     
+02C9   2???           01207     GOTO SET_DIR_led_13                      
+02CA   1029           01208     BCF dir, 0                               
+                      01209 ;    GOTO LOOP_PWM_led_13                
+02CB   0008           01210         return
+02CC                  01211 SET_DIR_led_13                           
+02CC   1429           01212     BSF dir, 0                               
+                      01213 ;    GOTO LOOP_PWM_led_13   
+02CD   0008           01214         return 
+                      01215 
+02CE                  01216 DELAY_led_13                            ;Start DELAY subroutine here
+02CE   3005           01217     MOVLW 5;10                          ;Load initial value for the delay    
+02CF   00A8           01218     MOVWF j                             ;Copy the value to j
+02D0                  01219 DELAY_LOOP_led_13               ;Start delay loop
+02D0   0BA8           01220     decfsz j, f                         ;Decrement j and check if it is not zero
+02D1   2???           01221     goto DELAY_LOOP_led_13  ;If not, then go to the DELAY_LOOP label
+                      01222 ;    RETLW 0                            ;Else return from the subroutine
+02D2   0008           01223         return
+                      01224 
+                      01225 ;==========Bucla PWM Led 14 - al paisprezecelea led
+                      01226 
+02D3                  01227 LOOP_PWM_led_14
+                      01228 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01229 ;    MOVWF dir                  ;set PWM up or down             
+02D3   2???           01230         call Led_14                             ;led ON
+02D4   30FF           01231     MOVLW 0xFF                          ;Set the initial value of i
+02D5   00A6           01232     MOVWF i                             ;as 0xFF
+                      01233 ;    BSF GPIO, GP1              ;Set GP1 pin
+02D6                  01234 INT_LOOP_led_14                         ;Beginning of the internal PWM loop
+02D6   0827           01235     MOVF limit, W               ;Copy the PWM limit value of the W register
+02D7   0226           01236     SUBWF i, W                          ;Subtract the W from i
+02D8   1D03           01237     BTFSS STATUS, Z             ;If the result is not 0
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 25
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02D9   2???           01238     GOTO $ + 2                          ;then go to the line 22
+                      01239 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+02DA   2???           01240         call Led_off                    ;led OFF
+02DB   2???           01241     CALL DELAY_led_14           ;and call the DELAY subroutine
+02DC   0BA6           01242     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+02DD   2???           01243     GOTO INT_LOOP_led_14    ;If not, return to the internal PWM loop start
+02DE   1C29           01244     BTFSS dir, 0                     
+02DF   2???           01245     GOTO DEC_BRIGHTNESS_led_14
+02E0   0BA7           01246     DECFSZ limit, F                  
+02E1   2???           01247     GOTO LOOP_PWM_led_14                 
+02E2   2???           01248     GOTO TOGGLE_DIR_led_14       
+02E3                  01249 DEC_BRIGHTNESS_led_14            
+02E3   0AA7           01250     INCF limit, F                    
+02E4   30FF           01251     MOVLW 0xFF                   
+02E5   0227           01252     SUBWF limit, W                   
+02E6   1D03           01253     BTFSS STATUS, Z      
+02E7   2???           01254     GOTO LOOP_PWM_led_14                 
+02E8                  01255 TOGGLE_DIR_led_14                
+02E8   1C29           01256     BTFSS dir, 0                     
+02E9   2???           01257     GOTO SET_DIR_led_14                      
+02EA   1029           01258     BCF dir, 0                               
+                      01259 ;    GOTO LOOP_PWM_led_14                
+02EB   0008           01260         return
+02EC                  01261 SET_DIR_led_14                           
+02EC   1429           01262     BSF dir, 0                               
+                      01263 ;    GOTO LOOP_PWM_led_14   
+02ED   0008           01264         return 
+                      01265 
+02EE                  01266 DELAY_led_14                            ;Start DELAY subroutine here
+02EE   3005           01267     MOVLW 5;10                          ;Load initial value for the delay    
+02EF   00A8           01268     MOVWF j                             ;Copy the value to j
+02F0                  01269 DELAY_LOOP_led_14               ;Start delay loop
+02F0   0BA8           01270     decfsz j, f                         ;Decrement j and check if it is not zero
+02F1   2???           01271     goto DELAY_LOOP_led_14  ;If not, then go to the DELAY_LOOP label
+                      01272 ;    RETLW 0                            ;Else return from the subroutine
+02F2   0008           01273         return
+                      01274 
+                      01275 ;==========Bucla PWM Led 15 - al cincisprezecelea led
+                      01276 
+02F3                  01277 LOOP_PWM_led_15
+                      01278 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01279 ;    MOVWF dir                  ;set PWM up or down             
+02F3   2???           01280         call Led_15                             ;led ON
+02F4   30FF           01281     MOVLW 0xFF                          ;Set the initial value of i
+02F5   00A6           01282     MOVWF i                             ;as 0xFF
+                      01283 ;    BSF GPIO, GP1              ;Set GP1 pin
+02F6                  01284 INT_LOOP_led_15                         ;Beginning of the internal PWM loop
+02F6   0827           01285     MOVF limit, W               ;Copy the PWM limit value of the W register
+02F7   0226           01286     SUBWF i, W                          ;Subtract the W from i
+02F8   1D03           01287     BTFSS STATUS, Z             ;If the result is not 0
+02F9   2???           01288     GOTO $ + 2                          ;then go to the line 22
+                      01289 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+02FA   2???           01290         call Led_off                    ;led OFF
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 26
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+02FB   2???           01291     CALL DELAY_led_15           ;and call the DELAY subroutine
+02FC   0BA6           01292     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+02FD   2???           01293     GOTO INT_LOOP_led_15    ;If not, return to the internal PWM loop start
+02FE   1C29           01294     BTFSS dir, 0                     
+02FF   2???           01295     GOTO DEC_BRIGHTNESS_led_15
+0300   0BA7           01296     DECFSZ limit, F                  
+0301   2???           01297     GOTO LOOP_PWM_led_15                 
+0302   2???           01298     GOTO TOGGLE_DIR_led_15       
+0303                  01299 DEC_BRIGHTNESS_led_15            
+0303   0AA7           01300     INCF limit, F                    
+0304   30FF           01301     MOVLW 0xFF                   
+0305   0227           01302     SUBWF limit, W                   
+0306   1D03           01303     BTFSS STATUS, Z      
+0307   2???           01304     GOTO LOOP_PWM_led_15                 
+0308                  01305 TOGGLE_DIR_led_15                
+0308   1C29           01306     BTFSS dir, 0                     
+0309   2???           01307     GOTO SET_DIR_led_15                      
+030A   1029           01308     BCF dir, 0                               
+                      01309 ;    GOTO LOOP_PWM_led_15                
+030B   0008           01310         return
+030C                  01311 SET_DIR_led_15                           
+030C   1429           01312     BSF dir, 0                               
+                      01313 ;    GOTO LOOP_PWM_led_15   
+030D   0008           01314         return 
+                      01315 
+030E                  01316 DELAY_led_15                            ;Start DELAY subroutine here
+030E   3005           01317     MOVLW 5;10                          ;Load initial value for the delay    
+030F   00A8           01318     MOVWF j                             ;Copy the value to j
+0310                  01319 DELAY_LOOP_led_15               ;Start delay loop
+0310   0BA8           01320     decfsz j, f                         ;Decrement j and check if it is not zero
+0311   2???           01321     goto DELAY_LOOP_led_15  ;If not, then go to the DELAY_LOOP label
+                      01322 ;    RETLW 0                            ;Else return from the subroutine
+0312   0008           01323         return
+                      01324 
+                      01325 ;==========Bucla PWM Led 16 - al saisprezecelea led
+                      01326 
+0313                  01327 LOOP_PWM_led_16
+                      01328 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01329 ;    MOVWF dir                  ;set PWM up or down             
+0313   2???           01330         call Led_16                             ;led ON
+0314   30FF           01331     MOVLW 0xFF                          ;Set the initial value of i
+0315   00A6           01332     MOVWF i                             ;as 0xFF
+                      01333 ;    BSF GPIO, GP1              ;Set GP1 pin
+0316                  01334 INT_LOOP_led_16                         ;Beginning of the internal PWM loop
+0316   0827           01335     MOVF limit, W               ;Copy the PWM limit value of the W register
+0317   0226           01336     SUBWF i, W                          ;Subtract the W from i
+0318   1D03           01337     BTFSS STATUS, Z             ;If the result is not 0
+0319   2???           01338     GOTO $ + 2                          ;then go to the line 22
+                      01339 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+031A   2???           01340         call Led_off                    ;led OFF
+031B   2???           01341     CALL DELAY_led_16           ;and call the DELAY subroutine
+031C   0BA6           01342     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+031D   2???           01343     GOTO INT_LOOP_led_16    ;If not, return to the internal PWM loop start
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 27
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+031E   1C29           01344     BTFSS dir, 0                     
+031F   2???           01345     GOTO DEC_BRIGHTNESS_led_16
+0320   0BA7           01346     DECFSZ limit, F                  
+0321   2???           01347     GOTO LOOP_PWM_led_16                 
+0322   2???           01348     GOTO TOGGLE_DIR_led_16       
+0323                  01349 DEC_BRIGHTNESS_led_16            
+0323   0AA7           01350     INCF limit, F                    
+0324   30FF           01351     MOVLW 0xFF                   
+0325   0227           01352     SUBWF limit, W                   
+0326   1D03           01353     BTFSS STATUS, Z      
+0327   2???           01354     GOTO LOOP_PWM_led_16                 
+0328                  01355 TOGGLE_DIR_led_16                
+0328   1C29           01356     BTFSS dir, 0                     
+0329   2???           01357     GOTO SET_DIR_led_16                      
+032A   1029           01358     BCF dir, 0                               
+                      01359 ;    GOTO LOOP_PWM_led_16                
+032B   0008           01360         return
+032C                  01361 SET_DIR_led_16                           
+032C   1429           01362     BSF dir, 0                               
+                      01363 ;    GOTO LOOP_PWM_led_16   
+032D   0008           01364         return 
+                      01365 
+032E                  01366 DELAY_led_16                            ;Start DELAY subroutine here
+032E   3005           01367     MOVLW 5;10                          ;Load initial value for the delay    
+032F   00A8           01368     MOVWF j                             ;Copy the value to j
+0330                  01369 DELAY_LOOP_led_16               ;Start delay loop
+0330   0BA8           01370     decfsz j, f                         ;Decrement j and check if it is not zero
+0331   2???           01371     goto DELAY_LOOP_led_16  ;If not, then go to the DELAY_LOOP label
+                      01372 ;    RETLW 0                            ;Else return from the subroutine
+0332   0008           01373         return
+                      01374 
+                      01375 ;==========Bucla PWM Led 17 - al saptisprezecelea led
+                      01376 
+0333                  01377 LOOP_PWM_led_17
+                      01378 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01379 ;    MOVWF dir                  ;set PWM up or down             
+0333   2???           01380         call Led_17                             ;led ON
+0334   30FF           01381     MOVLW 0xFF                          ;Set the initial value of i
+0335   00A6           01382     MOVWF i                             ;as 0xFF
+                      01383 ;    BSF GPIO, GP1              ;Set GP1 pin
+0336                  01384 INT_LOOP_led_17                         ;Beginning of the internal PWM loop
+0336   0827           01385     MOVF limit, W               ;Copy the PWM limit value of the W register
+0337   0226           01386     SUBWF i, W                          ;Subtract the W from i
+0338   1D03           01387     BTFSS STATUS, Z             ;If the result is not 0
+0339   2???           01388     GOTO $ + 2                          ;then go to the line 22
+                      01389 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+033A   2???           01390         call Led_off                    ;led OFF
+033B   2???           01391     CALL DELAY_led_17           ;and call the DELAY subroutine
+033C   0BA6           01392     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+033D   2???           01393     GOTO INT_LOOP_led_17    ;If not, return to the internal PWM loop start
+033E   1C29           01394     BTFSS dir, 0                     
+033F   2???           01395     GOTO DEC_BRIGHTNESS_led_17
+0340   0BA7           01396     DECFSZ limit, F                  
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 28
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0341   2???           01397     GOTO LOOP_PWM_led_17                 
+0342   2???           01398     GOTO TOGGLE_DIR_led_17       
+0343                  01399 DEC_BRIGHTNESS_led_17            
+0343   0AA7           01400     INCF limit, F                    
+0344   30FF           01401     MOVLW 0xFF                   
+0345   0227           01402     SUBWF limit, W                   
+0346   1D03           01403     BTFSS STATUS, Z      
+0347   2???           01404     GOTO LOOP_PWM_led_17                 
+0348                  01405 TOGGLE_DIR_led_17                
+0348   1C29           01406     BTFSS dir, 0                     
+0349   2???           01407     GOTO SET_DIR_led_17                      
+034A   1029           01408     BCF dir, 0                               
+                      01409 ;    GOTO LOOP_PWM_led_17                
+034B   0008           01410         return
+034C                  01411 SET_DIR_led_17                           
+034C   1429           01412     BSF dir, 0                               
+                      01413 ;    GOTO LOOP_PWM_led_17   
+034D   0008           01414         return 
+                      01415 
+034E                  01416 DELAY_led_17                            ;Start DELAY subroutine here
+034E   3005           01417     MOVLW 5;10                          ;Load initial value for the delay    
+034F   00A8           01418     MOVWF j                             ;Copy the value to j
+0350                  01419 DELAY_LOOP_led_17               ;Start delay loop
+0350   0BA8           01420     decfsz j, f                         ;Decrement j and check if it is not zero
+0351   2???           01421     goto DELAY_LOOP_led_17  ;If not, then go to the DELAY_LOOP label
+                      01422 ;    RETLW 0                            ;Else return from the subroutine
+0352   0008           01423         return
+                      01424 
+                      01425 ;==========Bucla PWM Led 18 - al optisprezecelea led
+                      01426 
+0353                  01427 LOOP_PWM_led_18
+                      01428 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01429 ;    MOVWF dir                  ;set PWM up or down             
+0353   2???           01430         call Led_18                             ;led ON
+0354   30FF           01431     MOVLW 0xFF                          ;Set the initial value of i
+0355   00A6           01432     MOVWF i                             ;as 0xFF
+                      01433 ;    BSF GPIO, GP1              ;Set GP1 pin
+0356                  01434 INT_LOOP_led_18                         ;Beginning of the internal PWM loop
+0356   0827           01435     MOVF limit, W               ;Copy the PWM limit value of the W register
+0357   0226           01436     SUBWF i, W                          ;Subtract the W from i
+0358   1D03           01437     BTFSS STATUS, Z             ;If the result is not 0
+0359   2???           01438     GOTO $ + 2                          ;then go to the line 22
+                      01439 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+035A   2???           01440         call Led_off                    ;led OFF
+035B   2???           01441     CALL DELAY_led_18           ;and call the DELAY subroutine
+035C   0BA6           01442     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+035D   2???           01443     GOTO INT_LOOP_led_18    ;If not, return to the internal PWM loop start
+035E   1C29           01444     BTFSS dir, 0                     
+035F   2???           01445     GOTO DEC_BRIGHTNESS_led_18
+0360   0BA7           01446     DECFSZ limit, F                  
+0361   2???           01447     GOTO LOOP_PWM_led_18                 
+0362   2???           01448     GOTO TOGGLE_DIR_led_18       
+0363                  01449 DEC_BRIGHTNESS_led_18            
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 29
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0363   0AA7           01450     INCF limit, F                    
+0364   30FF           01451     MOVLW 0xFF                   
+0365   0227           01452     SUBWF limit, W                   
+0366   1D03           01453     BTFSS STATUS, Z      
+0367   2???           01454     GOTO LOOP_PWM_led_18                 
+0368                  01455 TOGGLE_DIR_led_18                
+0368   1C29           01456     BTFSS dir, 0                     
+0369   2???           01457     GOTO SET_DIR_led_18                      
+036A   1029           01458     BCF dir, 0                               
+                      01459 ;    GOTO LOOP_PWM_led_218               
+036B   0008           01460         return
+036C                  01461 SET_DIR_led_18                           
+036C   1429           01462     BSF dir, 0                               
+                      01463 ;    GOTO LOOP_PWM_led_18   
+036D   0008           01464         return 
+                      01465 
+036E                  01466 DELAY_led_18                            ;Start DELAY subroutine here
+036E   3005           01467     MOVLW 5;10                          ;Load initial value for the delay    
+036F   00A8           01468     MOVWF j                             ;Copy the value to j
+0370                  01469 DELAY_LOOP_led_18               ;Start delay loop
+0370   0BA8           01470     decfsz j, f                         ;Decrement j and check if it is not zero
+0371   2???           01471     goto DELAY_LOOP_led_18  ;If not, then go to the DELAY_LOOP label
+                      01472 ;    RETLW 0                            ;Else return from the subroutine
+0372   0008           01473         return
+                      01474 
+                      01475 ;==========Bucla PWM Led 19 - al nouasprezecelea led
+                      01476 
+0373                  01477 LOOP_PWM_led_19
+                      01478 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01479 ;    MOVWF dir                  ;set PWM up or down             
+0373   2???           01480         call Led_10                             ;led ON
+0374   30FF           01481     MOVLW 0xFF                          ;Set the initial value of i
+0375   00A6           01482     MOVWF i                             ;as 0xFF
+                      01483 ;    BSF GPIO, GP1              ;Set GP1 pin
+0376                  01484 INT_LOOP_led_19                         ;Beginning of the internal PWM loop
+0376   0827           01485     MOVF limit, W               ;Copy the PWM limit value of the W register
+0377   0226           01486     SUBWF i, W                          ;Subtract the W from i
+0378   1D03           01487     BTFSS STATUS, Z             ;If the result is not 0
+0379   2???           01488     GOTO $ + 2                          ;then go to the line 22
+                      01489 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+037A   2???           01490         call Led_off                    ;led OFF
+037B   2???           01491     CALL DELAY_led_19           ;and call the DELAY subroutine
+037C   0BA6           01492     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+037D   2???           01493     GOTO INT_LOOP_led_19    ;If not, return to the internal PWM loop start
+037E   1C29           01494     BTFSS dir, 0                     
+037F   2???           01495     GOTO DEC_BRIGHTNESS_led_19
+0380   0BA7           01496     DECFSZ limit, F                  
+0381   2???           01497     GOTO LOOP_PWM_led_19                 
+0382   2???           01498     GOTO TOGGLE_DIR_led_19       
+0383                  01499 DEC_BRIGHTNESS_led_19            
+0383   0AA7           01500     INCF limit, F                    
+0384   30FF           01501     MOVLW 0xFF                   
+0385   0227           01502     SUBWF limit, W                   
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 30
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0386   1D03           01503     BTFSS STATUS, Z      
+0387   2???           01504     GOTO LOOP_PWM_led_19                 
+0388                  01505 TOGGLE_DIR_led_19                
+0388   1C29           01506     BTFSS dir, 0                     
+0389   2???           01507     GOTO SET_DIR_led_19                      
+038A   1029           01508     BCF dir, 0                               
+                      01509 ;    GOTO LOOP_PWM_led_19                
+038B   0008           01510         return
+038C                  01511 SET_DIR_led_19                           
+038C   1429           01512     BSF dir, 0                               
+                      01513 ;    GOTO LOOP_PWM_led_19   
+038D   0008           01514         return 
+                      01515 
+038E                  01516 DELAY_led_19                            ;Start DELAY subroutine here
+038E   3005           01517     MOVLW 5;10                          ;Load initial value for the delay    
+038F   00A8           01518     MOVWF j                             ;Copy the value to j
+0390                  01519 DELAY_LOOP_led_19               ;Start delay loop
+0390   0BA8           01520     decfsz j, f                         ;Decrement j and check if it is not zero
+0391   2???           01521     goto DELAY_LOOP_led_19  ;If not, then go to the DELAY_LOOP label
+                      01522 ;    RETLW 0                            ;Else return from the subroutine
+0392   0008           01523         return
+                      01524 
+                      01525 ;==========Bucla PWM Led 20 - al douazecelea led
+                      01526 
+0393                  01527 LOOP_PWM_led_20
+                      01528 ;    MOVLW 0x1                          ;1 = PWM 0 -> max; 0 = PWM max -> 0
+                      01529 ;    MOVWF dir                  ;set PWM up or down             
+0393   2???           01530         call Led_20                             ;led ON
+0394   30FF           01531     MOVLW 0xFF                          ;Set the initial value of i
+0395   00A6           01532     MOVWF i                             ;as 0xFF
+                      01533 ;    BSF GPIO, GP1              ;Set GP1 pin
+0396                  01534 INT_LOOP_led_20                         ;Beginning of the internal PWM loop
+0396   0827           01535     MOVF limit, W               ;Copy the PWM limit value of the W register
+0397   0226           01536     SUBWF i, W                          ;Subtract the W from i
+0398   1D03           01537     BTFSS STATUS, Z             ;If the result is not 0
+0399   2???           01538     GOTO $ + 2                          ;then go to the line 22
+                      01539 ;    BCF GPIO, GP1              ;else reset the GP1 pin
+039A   2???           01540         call Led_off                    ;led OFF
+039B   2???           01541     CALL DELAY_led_20           ;and call the DELAY subroutine
+039C   0BA6           01542     DECFSZ i, F                         ;Decrement the i, and check if the result is 0
+039D   2???           01543     GOTO INT_LOOP_led_20    ;If not, return to the internal PWM loop start
+039E   1C29           01544     BTFSS dir, 0                     
+039F   2???           01545     GOTO DEC_BRIGHTNESS_led_20
+03A0   0BA7           01546     DECFSZ limit, F                  
+03A1   2???           01547     GOTO LOOP_PWM_led_20                 
+03A2   2???           01548     GOTO TOGGLE_DIR_led_20       
+03A3                  01549 DEC_BRIGHTNESS_led_20            
+03A3   0AA7           01550     INCF limit, F                    
+03A4   30FF           01551     MOVLW 0xFF                   
+03A5   0227           01552     SUBWF limit, W                   
+03A6   1D03           01553     BTFSS STATUS, Z      
+03A7   2???           01554     GOTO LOOP_PWM_led_20                 
+03A8                  01555 TOGGLE_DIR_led_20                
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 31
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03A8   1C29           01556     BTFSS dir, 0                     
+03A9   2???           01557     GOTO SET_DIR_led_20                      
+03AA   1029           01558     BCF dir, 0                               
+                      01559 ;    GOTO LOOP_PWM_led_20                
+03AB   0008           01560         return
+03AC                  01561 SET_DIR_led_20                           
+03AC   1429           01562     BSF dir, 0                               
+                      01563 ;    GOTO LOOP_PWM_led_20   
+03AD   0008           01564         return 
+                      01565 
+03AE                  01566 DELAY_led_20                            ;Start DELAY subroutine here
+03AE   3005           01567     MOVLW 5;10                          ;Load initial value for the delay    
+03AF   00A8           01568     MOVWF j                             ;Copy the value to j
+03B0                  01569 DELAY_LOOP_led_20               ;Start delay loop
+03B0   0BA8           01570     decfsz j, f                         ;Decrement j and check if it is not zero
+03B1   2???           01571     goto DELAY_LOOP_led_20  ;If not, then go to the DELAY_LOOP label
+                      01572 ;    RETLW 0                            ;Else return from the subroutine
+03B2   0008           01573         return
+                      01574 
+                      01575 
+                      01576 
+                      01577 
+                      01578 
+                      01579 ;==========Bucle pentru Delay:
+                      01580 ;=====Bucla calculata 1ms
+03B3                  01581 Delay_1ms ;993 cycles           
+03B3   30C6           01582         movlw   0xC6
+03B4   00A2           01583         movwf   d1
+03B5   3001           01584         movlw   0x01
+03B6   00A3           01585         movwf   d2
+03B7                  01586 Delay_001
+03B7   0BA2           01587         decfsz  d1, f
+03B8   2???           01588         goto    $+2
+03B9   0BA3           01589         decfsz  d2, f
+03BA   2???           01590         goto    Delay_001
+                      01591                         ;3 cycles
+03BB   2???           01592         goto    $+1
+03BC   0000           01593         nop
+                      01594                         ;4 cycles (including call)
+03BD   0008           01595         return
+                      01596 
+                      01597 ;=====Bucla calculata 10ms
+03BE                  01598 Delay_10ms ;9993 cycles                 
+03BE   30CE           01599         movlw   0xCE
+03BF   00A2           01600         movwf   d1
+03C0   3008           01601         movlw   0x08
+03C1   00A3           01602         movwf   d2
+03C2                  01603 Delay_010
+03C2   0BA2           01604         decfsz  d1, f
+03C3   2???           01605         goto    $+2
+03C4   0BA3           01606         decfsz  d2, f
+03C5   2???           01607         goto    Delay_010
+                      01608                         ;3 cycles
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 32
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+03C6   2???           01609         goto    $+1
+03C7   0000           01610         nop
+                      01611                         ;4 cycles (including call)
+03C8   0008           01612         return
+                      01613 
+                      01614 ;=====Bucla calculata 100ms
+03C9                  01615 Delay_100ms ;99993 cycles                       
+03C9   301E           01616         movlw   0x1E
+03CA   00A2           01617         movwf   d1
+03CB   304F           01618         movlw   0x4F
+03CC   00A3           01619         movwf   d2
+03CD                  01620 Delay_0100
+03CD   0BA2           01621         decfsz  d1, f
+03CE   2???           01622         goto    $+2
+03CF   0BA3           01623         decfsz  d2, f
+03D0   2???           01624         goto    Delay_0100
+                      01625                         ;3 cycles
+03D1   2???           01626         goto    $+1
+03D2   0000           01627         nop
+                      01628                         ;4 cycles (including call)
+03D3   0008           01629         return
+                      01630 
+                      01631 ;=====Bucla calculata 500ms
+03D4                  01632 Delay_500ms ;499994 cycles                      
+03D4   3003           01633         movlw   0x03
+03D5   00A2           01634         movwf   d1
+03D6   3018           01635         movlw   0x18
+03D7   00A3           01636         movwf   d2
+03D8   3002           01637         movlw   0x02
+03D9   00A4           01638         movwf   d3
+03DA                  01639 Delay_0500
+03DA   0BA2           01640         decfsz  d1, f
+03DB   2???           01641         goto    $+2
+03DC   0BA3           01642         decfsz  d2, f
+03DD   2???           01643         goto    $+2
+03DE   0BA4           01644         decfsz  d3, f
+03DF   2???           01645         goto    Delay_0500
+                      01646                         ;2 cycles
+03E0   2???           01647         goto    $+1
+                      01648                         ;4 cycles (including call)
+03E1   0008           01649         return
+                      01650 
+3FC4                  01651         END
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 33
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+ADCON0                            0000001F
+ADCS0                             00000004
+ADCS1                             00000005
+ADCS2                             00000006
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADON                              00000000
+ADRESH                            0000001E
+ADRESL                            0000009E
+ANS0                              00000000
+ANS1                              00000001
+ANS2                              00000002
+ANS3                              00000003
+ANSEL                             0000009F
+Bucla_random                      00000078
+C                                 00000000
+CAL0                              00000002
+CAL1                              00000003
+CAL2                              00000004
+CAL3                              00000005
+CAL4                              00000006
+CAL5                              00000007
+CHS0                              00000002
+CHS1                              00000003
+CINV                              00000004
+CIS                               00000003
+CM0                               00000000
+CM1                               00000001
+CM2                               00000002
+CMCON                             00000019
+CMIE                              00000003
+CMIF                              00000003
+COUT                              00000006
+D01_ON                            B'00000001'
+D02_ON                            B'00000010'
+D03_ON                            B'00000010'
+D04_ON                            B'00000100'
+D05_ON                            B'00000100'
+D06_ON                            B'00010000'
+D07_ON                            B'00010000'
+D08_ON                            B'00100000'
+D09_ON                            B'00000001'
+D10_ON                            B'00000100'
+D11_ON                            B'00000001'
+D12_ON                            B'00010000'
+D13_ON                            B'00000010'
+D14_ON                            B'00010000'
+D15_ON                            B'00000010'
+D16_ON                            B'00100000'
+D17_ON                            B'00000001'
+D18_ON                            B'00100000'
+D19_ON                            B'00000100'
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 34
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+D20_ON                            B'00100000'
+DC                                00000001
+DEC_BRIGHTNESS_led_01             00000143
+DEC_BRIGHTNESS_led_02             00000163
+DEC_BRIGHTNESS_led_03             00000183
+DEC_BRIGHTNESS_led_04             000001A3
+DEC_BRIGHTNESS_led_05             000001C3
+DEC_BRIGHTNESS_led_06             000001E3
+DEC_BRIGHTNESS_led_07             00000203
+DEC_BRIGHTNESS_led_08             00000223
+DEC_BRIGHTNESS_led_09             00000243
+DEC_BRIGHTNESS_led_10             00000263
+DEC_BRIGHTNESS_led_11             00000283
+DEC_BRIGHTNESS_led_12             000002A3
+DEC_BRIGHTNESS_led_13             000002C3
+DEC_BRIGHTNESS_led_14             000002E3
+DEC_BRIGHTNESS_led_15             00000303
+DEC_BRIGHTNESS_led_16             00000323
+DEC_BRIGHTNESS_led_17             00000343
+DEC_BRIGHTNESS_led_18             00000363
+DEC_BRIGHTNESS_led_19             00000383
+DEC_BRIGHTNESS_led_20             000003A3
+DELAY_LOOP_led_01                 00000150
+DELAY_LOOP_led_02                 00000170
+DELAY_LOOP_led_03                 00000190
+DELAY_LOOP_led_04                 000001B0
+DELAY_LOOP_led_05                 000001D0
+DELAY_LOOP_led_06                 000001F0
+DELAY_LOOP_led_07                 00000210
+DELAY_LOOP_led_08                 00000230
+DELAY_LOOP_led_09                 00000250
+DELAY_LOOP_led_10                 00000270
+DELAY_LOOP_led_11                 00000290
+DELAY_LOOP_led_12                 000002B0
+DELAY_LOOP_led_13                 000002D0
+DELAY_LOOP_led_14                 000002F0
+DELAY_LOOP_led_15                 00000310
+DELAY_LOOP_led_16                 00000330
+DELAY_LOOP_led_17                 00000350
+DELAY_LOOP_led_18                 00000370
+DELAY_LOOP_led_19                 00000390
+DELAY_LOOP_led_20                 000003B0
+DELAY_led_01                      0000014E
+DELAY_led_02                      0000016E
+DELAY_led_03                      0000018E
+DELAY_led_04                      000001AE
+DELAY_led_05                      000001CE
+DELAY_led_06                      000001EE
+DELAY_led_07                      0000020E
+DELAY_led_08                      0000022E
+DELAY_led_09                      0000024E
+DELAY_led_10                      0000026E
+DELAY_led_11                      0000028E
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 35
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+DELAY_led_12                      000002AE
+DELAY_led_13                      000002CE
+DELAY_led_14                      000002EE
+DELAY_led_15                      0000030E
+DELAY_led_16                      0000032E
+DELAY_led_17                      0000034E
+DELAY_led_18                      0000036E
+DELAY_led_19                      0000038E
+DELAY_led_20                      000003AE
+Delay_001                         000003B7
+Delay_010                         000003C2
+Delay_0100                        000003CD
+Delay_0500                        000003DA
+Delay_100ms                       000003C9
+Delay_10ms                        000003BE
+Delay_1ms                         000003B3
+Delay_500ms                       000003D4
+EEADR                             0000009B
+EECON1                            0000009C
+EECON2                            0000009D
+EEDAT                             0000009A
+EEDATA                            0000009A
+EEIE                              00000007
+EEIF                              00000007
+F                                 00000001
+FSR                               00000004
+GIE                               00000007
+GO                                00000001
+GO_DONE                           00000001
+GO_NOT_DONE                       00000001
+GP0                               00000000
+GP1                               00000001
+GP2                               00000002
+GP3                               00000003
+GP4                               00000004
+GP5                               00000005
+GPIE                              00000003
+GPIF                              00000000
+GPIO                              00000005
+GPIO0                             00000000
+GPIO1                             00000001
+GPIO2                             00000002
+GPIO3                             00000003
+GPIO4                             00000004
+GPIO5                             00000005
+INDF                              00000000
+INTCON                            0000000B
+INTE                              00000004
+INTEDG                            00000006
+INTF                              00000001
+INT_LOOP_led_01                   00000136
+INT_LOOP_led_02                   00000156
+INT_LOOP_led_03                   00000176
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 36
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+INT_LOOP_led_04                   00000196
+INT_LOOP_led_05                   000001B6
+INT_LOOP_led_06                   000001D6
+INT_LOOP_led_07                   000001F6
+INT_LOOP_led_08                   00000216
+INT_LOOP_led_09                   00000236
+INT_LOOP_led_10                   00000256
+INT_LOOP_led_11                   00000276
+INT_LOOP_led_12                   00000296
+INT_LOOP_led_13                   000002B6
+INT_LOOP_led_14                   000002D6
+INT_LOOP_led_15                   000002F6
+INT_LOOP_led_16                   00000316
+INT_LOOP_led_17                   00000336
+INT_LOOP_led_18                   00000356
+INT_LOOP_led_19                   00000376
+INT_LOOP_led_20                   00000396
+IOC                               00000096
+IOC0                              00000000
+IOC1                              00000001
+IOC2                              00000002
+IOC3                              00000003
+IOC4                              00000004
+IOC5                              00000005
+IOCB                              00000096
+IOCB0                             00000000
+IOCB1                             00000001
+IOCB2                             00000002
+IOCB3                             00000003
+IOCB4                             00000004
+IOCB5                             00000005
+IRP                               00000007
+Initialize                        00000001
+LED_OFF                           B'00000000'
+LOOP_PWM_led_01                   00000133
+LOOP_PWM_led_02                   00000153
+LOOP_PWM_led_03                   00000173
+LOOP_PWM_led_04                   00000193
+LOOP_PWM_led_05                   000001B3
+LOOP_PWM_led_06                   000001D3
+LOOP_PWM_led_07                   000001F3
+LOOP_PWM_led_08                   00000213
+LOOP_PWM_led_09                   00000233
+LOOP_PWM_led_10                   00000253
+LOOP_PWM_led_11                   00000273
+LOOP_PWM_led_12                   00000293
+LOOP_PWM_led_13                   000002B3
+LOOP_PWM_led_14                   000002D3
+LOOP_PWM_led_15                   000002F3
+LOOP_PWM_led_16                   00000313
+LOOP_PWM_led_17                   00000333
+LOOP_PWM_led_18                   00000353
+LOOP_PWM_led_19                   00000373
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 37
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+LOOP_PWM_led_20                   00000393
+Led_01                            000000A7
+Led_02                            000000AE
+Led_03                            000000B5
+Led_04                            000000BC
+Led_05                            000000C3
+Led_06                            000000CA
+Led_07                            000000D1
+Led_08                            000000D8
+Led_09                            000000DF
+Led_10                            000000E6
+Led_11                            000000ED
+Led_12                            000000F4
+Led_13                            000000FB
+Led_14                            00000102
+Led_15                            00000109
+Led_16                            00000110
+Led_17                            00000117
+Led_18                            0000011E
+Led_19                            00000125
+Led_20                            0000012C
+Led_off                           000000A0
+NOT_BOD                           00000000
+NOT_BOR                           00000000
+NOT_DONE                          00000001
+NOT_GPPU                          00000007
+NOT_PD                            00000003
+NOT_POR                           00000001
+NOT_T1SYNC                        00000002
+NOT_TO                            00000004
+OPTION_REG                        00000081
+OSCCAL                            00000090
+PCL                               00000002
+PCLATH                            0000000A
+PCON                              0000008E
+PEIE                              00000006
+PIE1                              0000008C
+PIR1                              0000000C
+PS0                               00000000
+PS1                               00000001
+PS2                               00000002
+PSA                               00000003
+RD                                00000000
+RP0                               00000005
+RP1                               00000006
+SET_DIR_led_01                    0000014C
+SET_DIR_led_02                    0000016C
+SET_DIR_led_03                    0000018C
+SET_DIR_led_04                    000001AC
+SET_DIR_led_05                    000001CC
+SET_DIR_led_06                    000001EC
+SET_DIR_led_07                    0000020C
+SET_DIR_led_08                    0000022C
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 38
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+SET_DIR_led_09                    0000024C
+SET_DIR_led_10                    0000026C
+SET_DIR_led_11                    0000028C
+SET_DIR_led_12                    000002AC
+SET_DIR_led_13                    000002CC
+SET_DIR_led_14                    000002EC
+SET_DIR_led_15                    0000030C
+SET_DIR_led_16                    0000032C
+SET_DIR_led_17                    0000034C
+SET_DIR_led_18                    0000036C
+SET_DIR_led_19                    0000038C
+SET_DIR_led_20                    000003AC
+STATUS                            00000003
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0SE                              00000004
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000010
+T1IE                              00000000
+T1IF                              00000000
+T1OSCEN                           00000003
+TMR0                              00000001
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR1                              0000000E
+TMR1CS                            00000001
+TMR1GE                            00000006
+TMR1H                             0000000F
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1L                             0000000E
+TMR1ON                            00000000
+TOGGLE_DIR_led_01                 00000148
+TOGGLE_DIR_led_02                 00000168
+TOGGLE_DIR_led_03                 00000188
+TOGGLE_DIR_led_04                 000001A8
+TOGGLE_DIR_led_05                 000001C8
+TOGGLE_DIR_led_06                 000001E8
+TOGGLE_DIR_led_07                 00000208
+TOGGLE_DIR_led_08                 00000228
+TOGGLE_DIR_led_09                 00000248
+TOGGLE_DIR_led_10                 00000268
+TOGGLE_DIR_led_11                 00000288
+TOGGLE_DIR_led_12                 000002A8
+TOGGLE_DIR_led_13                 000002C8
+TOGGLE_DIR_led_14                 000002E8
+TOGGLE_DIR_led_15                 00000308
+TOGGLE_DIR_led_16                 00000328
+TOGGLE_DIR_led_17                 00000348
+TOGGLE_DIR_led_18                 00000368
+TOGGLE_DIR_led_19                 00000388
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 39
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TOGGLE_DIR_led_20                 000003A8
+TRISIO                            00000085
+TRISIO0                           00000000
+TRISIO1                           00000001
+TRISIO2                           00000002
+TRISIO3                           00000003
+TRISIO4                           00000004
+TRISIO5                           00000005
+TRIS_ALL_OUTPUT                   B'00111111'
+TRIS_D01_D02                      B'00111100'
+TRIS_D03_D04                      B'00111001'
+TRIS_D05_D06                      B'00101011'
+TRIS_D07_D08                      B'00001111'
+TRIS_D09_D10                      B'00111010'
+TRIS_D11_D12                      B'00101110'
+TRIS_D13_D14                      B'00101101'
+TRIS_D15_D16                      B'00011101'
+TRIS_D17_D18                      B'00011110'
+TRIS_D19_D20                      B'00011011'
+VCFG                              00000006
+VR0                               00000000
+VR1                               00000001
+VR2                               00000002
+VR3                               00000003
+VRCON                             00000099
+VREN                              00000007
+VRR                               00000005
+W                                 00000000
+WPU                               00000095
+WPU0                              00000000
+WPU1                              00000001
+WPU2                              00000002
+WPU4                              00000004
+WPU5                              00000005
+WR                                00000001
+WREN                              00000002
+WRERR                             00000003
+Z                                 00000002
+_.org_0_0139                      00000139
+_.org_0_0159                      00000159
+_.org_0_0179                      00000179
+_.org_0_0199                      00000199
+_.org_0_01B9                      000001B9
+_.org_0_01D9                      000001D9
+_.org_0_01F9                      000001F9
+_.org_0_0219                      00000219
+_.org_0_0239                      00000239
+_.org_0_0259                      00000259
+_.org_0_0279                      00000279
+_.org_0_0299                      00000299
+_.org_0_02B9                      000002B9
+_.org_0_02D9                      000002D9
+_.org_0_02F9                      000002F9
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 40
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_.org_0_0319                      00000319
+_.org_0_0339                      00000339
+_.org_0_0359                      00000359
+_.org_0_0379                      00000379
+_.org_0_0399                      00000399
+_.org_0_03B8                      000003B8
+_.org_0_03BB                      000003BB
+_.org_0_03C3                      000003C3
+_.org_0_03C6                      000003C6
+_.org_0_03CE                      000003CE
+_.org_0_03D1                      000003D1
+_.org_0_03DB                      000003DB
+_.org_0_03DD                      000003DD
+_.org_0_03E0                      000003E0
+_BODEN_OFF                        00003FBF
+_BODEN_ON                         00003FFF
+_BOREN_OFF                        00003FBF
+_BOREN_ON                         00003FFF
+_CONFIG                           00002007
+_CPD_OFF                          00003FFF
+_CPD_ON                           00003EFF
+_CP_OFF                           00003FFF
+_CP_ON                            00003F7F
+_DEVID1                           00002006
+_EC_OSC                           00003FFB
+_EXTRC_OSC_CLKOUT                 00003FFF
+_EXTRC_OSC_NOCLKOUT               00003FFE
+_FOSC_EC                          00003FFB
+_FOSC_EXTRCCLK                    00003FFF
+_FOSC_EXTRCIO                     00003FFE
+_FOSC_HS                          00003FFA
+_FOSC_INTRCCLK                    00003FFD
+_FOSC_INTRCIO                     00003FFC
+_FOSC_LP                          00003FF8
+_FOSC_XT                          00003FF9
+_HS_OSC                           00003FFA
+_IDLOC0                           00002000
+_IDLOC1                           00002001
+_IDLOC2                           00002002
+_IDLOC3                           00002003
+_INTRC_OSC_CLKOUT                 00003FFD
+_INTRC_OSC_NOCLKOUT               00003FFC
+_LP_OSC                           00003FF8
+_MCLRE_OFF                        00003FDF
+_MCLRE_ON                         00003FFF
+_PWRTE_OFF                        00003FFF
+_PWRTE_ON                         00003FEF
+_WDTE_OFF                         00003FF7
+_WDTE_ON                          00003FFF
+_WDT_OFF                          00003FF7
+_WDT_ON                           00003FFF
+_XT_OSC                           00003FF9
+__12F675                          00000001
+MPASM  5.51               BRAD DE CRACIUN.ASM   3-14-2023  16:29:38         PAGE 41
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+__DEBUG                           1
+aa                                00000025
+bucla                             00000013
+c1                                00000020
+c2                                00000021
+d1                                00000022
+d2                                00000023
+d3                                00000024
+dir                               00000029
+i                                 00000026
+j                                 00000028
+limit                             00000027
+var1                              20h
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :    25 reported,     0 suppressed
+
+

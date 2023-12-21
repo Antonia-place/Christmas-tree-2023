@@ -1,0 +1,208 @@
+MPLINK 4.49, Linker
+Linker Map File - Created Thu Mar 16 20:34:28 2023
+
+                                 Section Info
+                  Section       Type    Address   Location Size(Bytes)
+                ---------  ---------  ---------  ---------  ---------
+                   .org_0       code   0x000000    program   0x0006ca
+                   .cinit    romdata   0x000365    program   0x000004
+.config_2007_BRAD DE CRACIUN V2.O       code   0x002007    program   0x000002
+
+
+
+                              Program Memory Usage 
+                               Start         End      
+                           ---------   ---------      
+                            0x000000    0x000366      
+                            0x002007    0x002007      
+            872 out of 1158 program addresses used, program memory utilization is 75%
+
+
+
+                              Symbols - Sorted by Name
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+             Bucla_random   0x000258    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+    DEC_BRIGHTNESS_led_01   0x000326    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+        DELAY_LOOP_led_01   0x000333    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             DELAY_led_01   0x000331    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_001   0x00033a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_010   0x000345    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_0100   0x000350    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_0500   0x00035d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+              Delay_100ms   0x00034c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_10ms   0x000341    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_1ms   0x000336    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+              Delay_500ms   0x000357    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+          INT_LOOP_led_01   0x000319    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Initialize   0x000001    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+          LOOP_PWM_led_01   0x000316    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_01   0x00028a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_02   0x000291    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_03   0x000298    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_04   0x00029f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_05   0x0002a6    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_06   0x0002ad    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_07   0x0002b4    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_08   0x0002bb    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_09   0x0002c2    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_10   0x0002c9    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_11   0x0002d0    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_12   0x0002d7    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_13   0x0002de    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_14   0x0002e5    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_15   0x0002ec    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_16   0x0002f3    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_17   0x0002fa    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_18   0x000301    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_19   0x000308    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_20   0x00030f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                  Led_off   0x000283    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+           SET_DIR_led_01   0x00032f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+        TOGGLE_DIR_led_01   0x00032b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_031C   0x00031c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_033B   0x00033b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_033E   0x00033e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0346   0x000346    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0349   0x000349    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0351   0x000351    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0354   0x000354    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_035E   0x00035e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0360   0x000360    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0363   0x000363    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                    bucla   0x000013    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+            executa_bucla   0x000280    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_02   0x00006a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_02_bucla   0x00006b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_03   0x0000e2    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_03_bucla   0x0000e3    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_04   0x00007c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_04_bucla   0x00007d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_05   0x0000b8    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_05_bucla   0x0000b9    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_06   0x000096    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_06_bucla   0x000097    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_07   0x000114    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_07_bucla   0x000115    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_08   0x000072    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_08_bucla   0x000073    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_09   0x0000fa    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_09_bucla   0x0000fb    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_10   0x000088    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_10_bucla   0x000089    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_11   0x0000cc    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_11_bucla   0x0000cd    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_12   0x0000a6    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_12_bucla   0x0000a7    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_13   0x00016e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_13_bucla   0x00016f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_14   0x0001b4    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_14_bucla   0x0001b5    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_15   0x000190    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_15_bucla   0x000191    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_16   0x0001da    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_16_bucla   0x0001db    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_17   0x000202    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_17_bucla   0x000203    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_18   0x00014e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_18_bucla   0x00014f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_19   0x000130    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_19_bucla   0x000131    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_20   0x00022c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_20_bucla   0x00022d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+
+
+
+                              Symbols - Sorted by Address
+                     Name    Address   Location    Storage File                     
+                ---------  ---------  ---------  --------- ---------                
+               Initialize   0x000001    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                    bucla   0x000013    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_02   0x00006a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_02_bucla   0x00006b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_08   0x000072    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_08_bucla   0x000073    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_04   0x00007c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_04_bucla   0x00007d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_10   0x000088    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_10_bucla   0x000089    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_06   0x000096    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_06_bucla   0x000097    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_12   0x0000a6    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_12_bucla   0x0000a7    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_05   0x0000b8    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_05_bucla   0x0000b9    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_11   0x0000cc    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_11_bucla   0x0000cd    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_03   0x0000e2    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_03_bucla   0x0000e3    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_09   0x0000fa    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_09_bucla   0x0000fb    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_07   0x000114    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_07_bucla   0x000115    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_19   0x000130    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_19_bucla   0x000131    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_18   0x00014e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_18_bucla   0x00014f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_13   0x00016e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_13_bucla   0x00016f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_15   0x000190    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_15_bucla   0x000191    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_14   0x0001b4    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_14_bucla   0x0001b5    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_16   0x0001da    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_16_bucla   0x0001db    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_17   0x000202    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_17_bucla   0x000203    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             led_01_to_20   0x00022c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+       led_01_to_20_bucla   0x00022d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             Bucla_random   0x000258    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+            executa_bucla   0x000280    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                  Led_off   0x000283    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_01   0x00028a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_02   0x000291    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_03   0x000298    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_04   0x00029f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_05   0x0002a6    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_06   0x0002ad    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_07   0x0002b4    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_08   0x0002bb    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_09   0x0002c2    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_10   0x0002c9    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_11   0x0002d0    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_12   0x0002d7    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_13   0x0002de    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_14   0x0002e5    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_15   0x0002ec    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_16   0x0002f3    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_17   0x0002fa    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_18   0x000301    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_19   0x000308    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                   Led_20   0x00030f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+          LOOP_PWM_led_01   0x000316    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+          INT_LOOP_led_01   0x000319    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_031C   0x00031c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+    DEC_BRIGHTNESS_led_01   0x000326    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+        TOGGLE_DIR_led_01   0x00032b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+           SET_DIR_led_01   0x00032f    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             DELAY_led_01   0x000331    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+        DELAY_LOOP_led_01   0x000333    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_1ms   0x000336    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_001   0x00033a    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_033B   0x00033b    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_033E   0x00033e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_10ms   0x000341    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+                Delay_010   0x000345    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0346   0x000346    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0349   0x000349    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+              Delay_100ms   0x00034c    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_0100   0x000350    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0351   0x000351    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0354   0x000354    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+              Delay_500ms   0x000357    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+               Delay_0500   0x00035d    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_035E   0x00035e    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0360   0x000360    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+             _.org_0_0363   0x000363    program     static C:\Users\mihai\OneDrive\Documente\####Proiecte finalizate\Brad de craciun\Cod\Cod versiunea 2\Brad de Craciun v2.asm
+
+
